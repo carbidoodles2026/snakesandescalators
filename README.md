@@ -1,674 +1,1284 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Snakes & Ladders</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
-<style>
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0}
-body{
-  min-height:100vh;color:#fff;
-  font-family:'Baloo 2','Fredoka','Comic Sans MS',system-ui,sans-serif;
-  background:radial-gradient(circle at 20% 8%,#7c3aed 0,#312e81 45%,#1e1b4b 100%) fixed;
-  touch-action:manipulation;
-}
-.hidden{display:none!important}
-button{font-family:inherit;cursor:pointer}
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Snakes, Ladders & Escalators</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --dice-size: 68px;
+      --dice-half: 34px;
+    }
 
-/* ---------- SETUP ---------- */
-#setup{display:flex;justify-content:center;padding:22px 14px 40px}
-.setup-card{width:min(560px,100%);background:rgba(255,255,255,.12);backdrop-filter:blur(8px);border:2px solid rgba(255,255,255,.25);border-radius:26px;padding:22px 20px;box-shadow:0 20px 50px rgba(0,0,0,.4)}
-.title{font-size:clamp(30px,7vw,46px);font-weight:800;margin:0 0 2px;text-align:center;line-height:1.05;
-  background:linear-gradient(90deg,#fde047,#fb923c,#f472b6,#a78bfa,#38bdf8);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 3px 0 rgba(0,0,0,.35))}
-.sub{text-align:center;opacity:.85;margin:0 0 16px}
-.count-row{display:flex;gap:10px;justify-content:center;margin-bottom:16px;align-items:center}
-.count-row span{font-weight:700}
-.cbtn{width:48px;height:48px;border-radius:14px;border:3px solid rgba(255,255,255,.4);background:rgba(255,255,255,.1);color:#fff;font-size:22px;font-weight:800;transition:.15s}
-.cbtn.on{background:linear-gradient(135deg,#fbbf24,#f97316);border-color:#fff;transform:scale(1.08);box-shadow:0 6px 14px rgba(0,0,0,.35)}
-.pcard{display:flex;gap:14px;align-items:center;background:rgba(0,0,0,.25);border-left:8px solid var(--pc);border-radius:18px;padding:10px 12px;margin-bottom:10px}
-.avatar-pick{cursor:pointer;flex:none}
-.avatar{width:70px;height:70px;border-radius:50%;border:4px solid var(--pc);background:#fff center/cover no-repeat;display:grid;place-items:center;font-size:28px;box-shadow:0 0 0 3px #fff,0 6px 12px rgba(0,0,0,.4);position:relative}
-.avatar.empty{background:linear-gradient(135deg,rgba(255,255,255,.9),rgba(255,255,255,.6));color:#333}
-.pinfo{flex:1;min-width:0}
-.pname{width:100%;font:inherit;font-weight:700;font-size:18px;padding:7px 12px;border-radius:12px;border:2px solid rgba(255,255,255,.35);background:rgba(255,255,255,.92);color:#222}
-.hint{display:block;font-size:12.5px;opacity:.8;margin-top:4px;line-height:1.2}
-.linkbtn{background:none;border:none;color:#fca5a5;font-size:12.5px;font-weight:700;padding:0;text-decoration:underline}
-.bigbtn{display:block;width:100%;margin-top:14px;padding:14px;border-radius:18px;border:none;font-size:24px;font-weight:800;color:#fff;
-  background:linear-gradient(135deg,#22c55e,#16a34a);box-shadow:0 6px 0 #14532d,0 12px 20px rgba(0,0,0,.35);transition:.1s}
-.bigbtn:active{transform:translateY(4px);box-shadow:0 2px 0 #14532d}
+    @media (min-width: 640px) {
+      :root {
+        --dice-size: 76px;
+        --dice-half: 38px;
+      }
+    }
 
-/* ---------- GAME ---------- */
-.layout{display:flex;gap:20px;justify-content:center;align-items:flex-start;padding:22px 14px;flex-wrap:wrap}
-.board-wrap{--bs:min(calc(100vw - 52px),calc(100vh - 60px),780px);width:var(--bs);margin:6px}
-#board{position:relative;width:100%;aspect-ratio:1;border-radius:18px;background:#fff;
-  box-shadow:0 0 0 9px #f59e0b,0 0 0 13px #92400e,0 20px 40px rgba(0,0,0,.55)}
-#boardSvg{display:block;width:100%;height:100%;border-radius:14px}
-#tokens{position:absolute;inset:0;pointer-events:none}
-.token{position:absolute;width:4.8%;aspect-ratio:1;transform:translate(-50%,-50%);transition:left .24s linear,top .24s linear;z-index:5}
-.token.nomove{transition:none}
-.token.active{z-index:8}
-.token .in{width:100%;height:100%;border-radius:50%;border:3px solid var(--pc);background:var(--pc) center/cover no-repeat;
-  box-shadow:0 0 0 2px #fff,0 4px 8px rgba(0,0,0,.55);display:grid;place-items:center;font-weight:800;color:#fff;
-  font-size:clamp(9px,1.9vw,17px);text-shadow:0 1px 2px rgba(0,0,0,.6)}
-.token.nophoto .in{background:radial-gradient(circle at 32% 28%,rgba(255,255,255,.7),var(--pc) 55%)}
-.token.active .in{animation:pulse 1s ease-in-out infinite}
-@keyframes pulse{50%{box-shadow:0 0 0 2px #fff,0 0 0 7px rgba(255,255,255,.55),0 4px 8px rgba(0,0,0,.55)}}
-.token .in.hop{animation:hop .24s ease-out}
-@keyframes hop{0%{transform:translateY(0) scale(1)}45%{transform:translateY(-75%) scale(1.18)}100%{transform:translateY(0) scale(1)}}
-.token .in.climb{animation:climb .45s ease-in-out infinite}
-@keyframes climb{0%,100%{transform:rotate(-12deg) scale(1.1)}50%{transform:rotate(12deg) scale(1.1)}}
-.token .in.ride{transform:scale(1.15)}
-.token .in.slide{animation:slide .5s linear infinite}
-@keyframes slide{to{transform:rotate(360deg) scale(.9)}}
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: radial-gradient(circle at top left, #fef3c7 0%, #e0f2fe 45%, #ede9fe 100%);
+      min-height: 100vh;
+      overflow-x: hidden;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
 
-#toast{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%) scale(.6);opacity:0;z-index:20;pointer-events:none;
-  background:rgba(0,0,0,.78);color:#fff;font-weight:800;font-size:clamp(20px,4.6vw,38px);padding:10px 22px;border-radius:22px;border:4px solid #fff;
-  text-align:center;white-space:nowrap;transition:.25s}
-#toast.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+    h1, h2, h3, .font-display {
+      font-family: 'Fredoka', cursive, sans-serif;
+    }
 
-aside{width:min(350px,100%);display:flex;flex-direction:column;gap:12px}
-.panel{background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.22);border-radius:20px;padding:10px}
-.prow{display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:14px;border:3px solid transparent;transition:.2s}
-.prow.active{background:rgba(255,255,255,.2);border-color:var(--pc);transform:scale(1.02)}
-.prow .av{width:42px;height:42px;border-radius:50%;border:3px solid var(--pc);background:var(--pc) center/cover no-repeat;flex:none;display:grid;place-items:center;font-weight:800;box-shadow:0 0 0 2px #fff}
-.prow .nm{font-weight:800;font-size:17px;line-height:1}
-.prow .tl{font-size:13px;opacity:.85}
-.prow .bar{height:6px;border-radius:4px;background:rgba(255,255,255,.2);margin-top:3px;overflow:hidden}
-.prow .bar i{display:block;height:100%;background:var(--pc);transition:width .3s}
-.prow .meta{flex:1;min-width:0}
+    /* 3D Realistic White Dice Styling */
+    .dice-scene {
+      width: var(--dice-size);
+      height: var(--dice-size);
+      perspective: 600px;
+      margin: 0 auto;
+    }
 
-.dice-panel{text-align:center}
-.turn{font-weight:800;font-size:18px;margin-bottom:2px}
-.turn b{color:var(--pc)}
-.scene{width:130px;height:130px;margin:0 auto;perspective:650px;position:relative;cursor:pointer}
-.shadow{position:absolute;left:50%;bottom:6px;width:70px;height:14px;border-radius:50%;background:rgba(0,0,0,.45);filter:blur(4px);transform:translateX(-50%)}
-.shadow.bounce{animation:shadow 1.6s ease-out}
-@keyframes shadow{0%{transform:translateX(-50%) scale(1)}18%{transform:translateX(-50%) scale(.55);opacity:.5}36%{transform:translateX(-50%) scale(1)}52%{transform:translateX(-50%) scale(.75);opacity:.7}68%{transform:translateX(-50%) scale(1)}82%{transform:translateX(-50%) scale(.9)}100%{transform:translateX(-50%) scale(1)}}
-.dwrap{position:absolute;inset:0;display:grid;place-items:center;padding-bottom:14px}
-.dwrap.bounce{animation:dbounce 1.6s ease-out}
-@keyframes dbounce{0%{transform:translateY(-6px)}18%{transform:translateY(-70px)}36%{transform:translateY(0)}52%{transform:translateY(-30px)}68%{transform:translateY(0)}82%{transform:translateY(-8px)}100%{transform:translateY(0)}}
-.tilt{width:76px;height:76px;transform-style:preserve-3d;transform:rotateX(-24deg) rotateY(-28deg)}
-.cube{width:76px;height:76px;position:relative;transform-style:preserve-3d}
-.face{position:absolute;inset:0;border-radius:14px;
-  background:radial-gradient(circle at 30% 25%,#fff 0,#f6f6f6 55%,#dcdcdc 100%);
-  box-shadow:inset 0 0 9px rgba(0,0,0,.2),inset 0 -3px 6px rgba(0,0,0,.08);
-  display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);padding:11px;backface-visibility:hidden}
-.pip{place-self:center;width:84%;height:84%;border-radius:50%;
-  background:radial-gradient(circle at 35% 30%,#666 0,#000 60%);box-shadow:inset 0 -1px 2px rgba(255,255,255,.25)}
-.rollbtn{width:100%;margin-top:4px;padding:12px;border-radius:16px;border:none;font-size:22px;font-weight:800;color:#fff;
-  background:linear-gradient(135deg,#f43f5e,#e11d48);box-shadow:0 5px 0 #881337,0 10px 16px rgba(0,0,0,.3)}
-.rollbtn:active:not(:disabled){transform:translateY(3px);box-shadow:0 2px 0 #881337}
-.rollbtn:disabled{filter:grayscale(.6) brightness(.8);cursor:not-allowed}
-.rolled{min-height:24px;font-weight:700;margin-top:6px}
-#log{max-height:110px;overflow:auto;font-size:14px;line-height:1.35}
-#log div{padding:2px 4px;border-bottom:1px dashed rgba(255,255,255,.15)}
-.btnrow{display:flex;gap:8px}
-.smallbtn{flex:1;padding:9px;border-radius:12px;border:2px solid rgba(255,255,255,.35);background:rgba(255,255,255,.1);color:#fff;font-weight:700;font-size:15px}
+    .dice-cube {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.95s cubic-bezier(0.22, 1.15, 0.36, 1);
+    }
 
-/* ---------- WINNER ---------- */
-#winner{position:fixed;inset:0;background:rgba(10,5,40,.82);display:grid;place-items:center;z-index:100;overflow:hidden}
-.wcard{text-align:center;background:linear-gradient(160deg,#4c1d95,#1e3a8a);border:4px solid #fde047;border-radius:30px;padding:26px 30px;max-width:92vw;position:relative;z-index:2;animation:pop .5s cubic-bezier(.2,1.6,.4,1)}
-@keyframes pop{from{transform:scale(.3);opacity:0}}
-.wcard .big{width:120px;height:120px;border-radius:50%;margin:0 auto 8px;border:6px solid var(--pc);background:var(--pc) center/cover no-repeat;box-shadow:0 0 0 4px #fff,0 0 40px #fde047;display:grid;place-items:center;font-size:50px;font-weight:800}
-.wcard h2{margin:0;font-size:34px}
-.wcard p{margin:4px 0 14px;opacity:.9}
-.conf{position:absolute;top:-20px;width:10px;height:16px;animation:fall linear infinite;z-index:1}
-@keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
-.esc{animation:escmove .6s linear infinite}
-.escg{animation:escgroove .6s linear infinite}
-@keyframes escmove{from{stroke-dashoffset:0}to{stroke-dashoffset:-16}}
-@keyframes escgroove{from{stroke-dashoffset:-7}to{stroke-dashoffset:-23}}
-.tongue{transform-box:view-box;animation:flick 1.2s ease-in-out infinite}
-@keyframes flick{0%,70%,100%{opacity:1}80%{opacity:.2}}
-</style>
+    .dice-cube.rolling {
+      animation: diceTumble 0.75s linear infinite;
+    }
+
+    @keyframes diceTumble {
+      0%   { transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg); }
+      25%  { transform: rotateX(190deg) rotateY(95deg) rotateZ(45deg); }
+      50%  { transform: rotateX(360deg) rotateY(220deg) rotateZ(135deg); }
+      75%  { transform: rotateX(540deg) rotateY(310deg) rotateZ(240deg); }
+      100% { transform: rotateX(720deg) rotateY(360deg) rotateZ(360deg); }
+    }
+
+    .dice-face {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(145deg, #ffffff 0%, #f1f5f9 75%, #e2e8f0 100%);
+      border-radius: 14px;
+      border: 2px solid #cbd5e1;
+      box-shadow:
+        inset 0 3px 6px rgba(255, 255, 255, 0.95),
+        inset 0 -4px 8px rgba(15, 23, 42, 0.14),
+        0 4px 10px rgba(15, 23, 42, 0.15);
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      padding: 10px;
+      gap: 3px;
+      backface-visibility: hidden;
+    }
+
+    .pip {
+      width: 100%;
+      height: 100%;
+      border-radius: 9999px;
+      background: radial-gradient(circle at 35% 35%, #334155, #0f172a 75%);
+      box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.7), 0 1px 1px rgba(255, 255, 255, 0.8);
+      transform: scale(0.84);
+    }
+
+    .pip.red {
+      background: radial-gradient(circle at 35% 35%, #ef4444, #b91c1c 75%);
+      transform: scale(1.02);
+    }
+
+    /* Face transforms */
+    .face-1 { transform: rotateY(0deg) translateZ(var(--dice-half)); }
+    .face-2 { transform: rotateY(90deg) translateZ(var(--dice-half)); }
+    .face-3 { transform: rotateX(90deg) translateZ(var(--dice-half)); }
+    .face-4 { transform: rotateX(-90deg) translateZ(var(--dice-half)); }
+    .face-5 { transform: rotateY(-90deg) translateZ(var(--dice-half)); }
+    .face-6 { transform: rotateY(180deg) translateZ(var(--dice-half)); }
+
+    /* Board Tile Aesthetics */
+    .board-wrapper {
+      aspect-ratio: 1 / 1;
+      width: 100%;
+      max-width: 650px;
+      position: relative;
+      border-radius: 20px;
+      box-shadow:
+        0 20px 40px -12px rgba(15, 23, 42, 0.25),
+        0 0 0 6px #ffffff,
+        0 0 0 10px #fbbf24;
+      background: #ffffff;
+      overflow: hidden;
+    }
+
+    .board-grid {
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      grid-template-rows: repeat(10, 1fr);
+      width: 100%;
+      height: 100%;
+    }
+
+    .tile {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 2px 4px;
+      border: 0.5px solid rgba(255, 255, 255, 0.7);
+      font-weight: 700;
+      transition: filter 0.2s ease;
+    }
+
+    .tile-num {
+      font-family: 'Fredoka', sans-serif;
+      font-size: clamp(0.62rem, 1.8vw, 0.92rem);
+      line-height: 1;
+      color: rgba(15, 23, 42, 0.78);
+      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
+      z-index: 2;
+    }
+
+    /* Escalator Step Animation */
+    @keyframes escalatorDash {
+      to {
+        stroke-dashoffset: -24;
+      }
+    }
+
+    .escalator-steps {
+      animation: escalatorDash 1.1s linear infinite;
+    }
+
+    /* Player Avatar Token */
+    .player-token {
+      position: absolute;
+      width: 7.4%;
+      height: 7.4%;
+      border-radius: 9999px;
+      transform: translate(-50%, -50%);
+      transition: left 0.24s cubic-bezier(0.34, 1.56, 0.64, 1), top 0.24s cubic-bezier(0.34, 1.56, 0.64, 1);
+      z-index: 30;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35), 0 0 0 2.5px #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .player-token.sliding {
+      transition: left 0.75s cubic-bezier(0.25, 1, 0.5, 1), top 0.75s cubic-bezier(0.25, 1, 0.5, 1);
+      z-index: 40;
+    }
+
+    .player-token.active-turn {
+      z-index: 35;
+      animation: tokenPulse 1.4s ease-in-out infinite;
+    }
+
+    @keyframes tokenPulse {
+      0%, 100% { box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35), 0 0 0 3px #ffffff, 0 0 0 6px rgba(250, 204, 21, 0.85); }
+      50%      { box-shadow: 0 6px 14px rgba(0, 0, 0, 0.45), 0 0 0 3px #ffffff, 0 0 0 10px rgba(250, 204, 21, 0.25); }
+    }
+
+    .player-token img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* Confetti Canvas */
+    #confettiCanvas {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 60;
+    }
+  </style>
 </head>
-<body>
+<body class="text-slate-800 antialiased">
 
-<!-- ================= SETUP ================= -->
-<div id="setup">
-  <div class="setup-card">
-    <h1 class="title">🐍 Snakes &amp; Ladders 🪜</h1>
-    <p class="sub">Pumili ng bilang ng players at lagyan ng photo mula sa gallery!</p>
-    <div class="count-row">
-      <span>Players:</span>
-      <button class="cbtn" data-n="2">2</button>
-      <button class="cbtn" data-n="3">3</button>
-      <button class="cbtn" data-n="4">4</button>
-    </div>
-    <div id="playerCards"></div>
-    <button class="bigbtn" id="startBtn">▶ Start Game</button>
-  </div>
-</div>
+  <!-- Confetti Overlay for Victory -->
+  <canvas id="confettiCanvas"></canvas>
 
-<!-- ================= GAME ================= -->
-<div id="game" class="hidden">
-  <div class="layout">
-    <div class="board-wrap">
-      <div id="board">
-        <div id="boardHost"></div>
-        <div id="tokens"></div>
-        <div id="toast"></div>
-      </div>
-    </div>
-    <aside>
-      <div class="panel" id="players"></div>
-      <div class="panel dice-panel">
-        <div class="turn" id="turnLabel"></div>
-        <div class="scene" id="scene" title="Click to roll">
-          <div class="shadow" id="shadow"></div>
-          <div class="dwrap" id="dwrap"><div class="tilt"><div class="cube" id="cube"></div></div></div>
+  <!-- ==================== SETUP SCREEN ==================== -->
+  <div id="setupScreen" class="min-h-screen flex items-center justify-center p-4 sm:p-6">
+    <div class="w-full max-w-2xl bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl border-4 border-amber-300 p-6 sm:p-8">
+      <div class="text-center mb-6">
+        <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-100 text-amber-800 font-semibold text-xs sm:text-sm mb-2">
+          <span>🐍 Cartoon Snakes</span>
+          <span>•</span>
+          <span>🪜 Wooden Ladders</span>
+          <span>•</span>
+          <span>🛗 Mega Escalators</span>
         </div>
-        <div class="rolled" id="rolled">&nbsp;</div>
-        <button class="rollbtn" id="rollBtn">🎲 Roll the dice!</button>
+        <h1 class="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight">
+          Snakes &amp; Ladders Deluxe
+        </h1>
+        <p class="text-slate-500 text-sm sm:text-base mt-1">
+          Customize 2 to 4 players and upload your own photos from your gallery!
+        </p>
       </div>
-      <div class="panel" id="log"></div>
-      <div class="btnrow">
-        <button class="smallbtn" id="restartBtn">↻ Restart</button>
-        <button class="smallbtn" id="setupBtn">⚙ Change players</button>
+
+      <!-- Player Count Selector -->
+      <div class="mb-6">
+        <label class="block text-sm font-bold text-slate-700 mb-2 text-center">How many players?</label>
+        <div class="grid grid-cols-3 gap-3 max-w-sm mx-auto" id="playerCountButtons">
+          <button type="button" data-count="2" class="count-btn py-2.5 rounded-2xl font-display font-bold text-lg border-2 border-indigo-600 bg-indigo-600 text-white shadow-md transition">
+            2 Players
+          </button>
+          <button type="button" data-count="3" class="count-btn py-2.5 rounded-2xl font-display font-bold text-lg border-2 border-slate-200 bg-slate-50 text-slate-700 hover:border-indigo-300 transition">
+            3 Players
+          </button>
+          <button type="button" data-count="4" class="count-btn py-2.5 rounded-2xl font-display font-bold text-lg border-2 border-slate-200 bg-slate-50 text-slate-700 hover:border-indigo-300 transition">
+            4 Players
+          </button>
+        </div>
       </div>
-    </aside>
+
+      <!-- Player Customization Cards -->
+      <div id="playerSetupList" class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+        <!-- Populated dynamically by JS -->
+      </div>
+
+      <!-- Game Rule Toggle -->
+      <div class="flex items-center justify-between bg-slate-50 rounded-2xl p-3.5 mb-6 border border-slate-200">
+        <div>
+          <p class="text-sm font-bold text-slate-800">Exact Roll to Finish (Tile 100)</p>
+          <p class="text-xs text-slate-500">Bounce back extra steps if you roll over 100</p>
+        </div>
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" id="exactRollToggle" class="sr-only peer" checked>
+          <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+        </label>
+      </div>
+
+      <button id="startGameBtn" type="button" class="w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-600 hover:from-emerald-600 hover:to-cyan-700 text-white font-display font-bold text-xl shadow-lg shadow-emerald-500/30 active:scale-[0.99] transition cursor-pointer">
+        🎮 Start Game!
+      </button>
+    </div>
   </div>
-</div>
 
-<!-- ================= WINNER ================= -->
-<div id="winner" class="hidden">
-  <div class="wcard" id="wcard"></div>
-</div>
+  <!-- ==================== GAME SCREEN ==================== -->
+  <div id="gameScreen" class="hidden min-h-screen flex flex-col lg:flex-row items-center justify-center gap-4 lg:gap-8 p-3 sm:p-6 max-w-6xl mx-auto">
 
-<script>
-/* =====================================================
-   CONFIG
-===================================================== */
-const SIZE = 1000, S = 100;
-const SNAKES  = {16:6, 47:26, 49:11, 62:19, 64:60, 87:24, 93:73, 95:75, 98:78};   // head -> tail
-const LADDERS = {2:23, 8:34, 20:77, 28:84, 36:44, 51:67, 71:91, 4:56};            // bottom -> top
-const ESCALATOR_MIN_ROWS = 5;   // ladder rises >= this many rows becomes an escalator
-const COLORS = ['#ef4444','#3b82f6','#22c55e','#f59e0b'];
+    <!-- Left / Top: Board Area -->
+    <div class="w-full max-w-[650px] flex flex-col items-center">
+      <!-- Top Mobile Bar -->
+      <div class="w-full flex items-center justify-between mb-2.5 px-1">
+        <button id="backToSetupBtn" type="button" class="px-3 py-1.5 rounded-xl bg-white/90 hover:bg-white text-slate-700 font-semibold text-xs sm:text-sm shadow border border-slate-200 transition">
+          ← Change Players
+        </button>
+        <div class="flex items-center gap-2">
+          <span class="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold bg-white/80 px-3 py-1.5 rounded-xl border border-slate-200 text-slate-600">
+            <span>🪜 Ladder</span>
+            <span>•</span>
+            <span>🛗 Escalator</span>
+            <span>•</span>
+            <span>🐍 Snake</span>
+          </span>
+          <button id="muteBtn" type="button" class="p-2 rounded-xl bg-white/90 hover:bg-white text-slate-700 shadow border border-slate-200 transition" title="Toggle Sound">
+            🔊
+          </button>
+        </div>
+      </div>
 
-const SNAKE_STYLES = [
-  {a:'#22c55e', b:'#fde047', pat:'spots',   acc:null,    eyes:'googly'},
-  {a:'#a855f7', b:'#f9a8d4', pat:'stripes', acc:null,    eyes:'googly'},
-  {a:'#fb923c', b:'#ef4444', pat:'stripes', acc:'bow',   eyes:'googly'},
-  {a:'#14b8a6', b:'#bef264', pat:'spots',   acc:null,    eyes:'shades'},
-  {a:'#3b82f6', b:'#67e8f9', pat:'stripes', acc:null,    eyes:'googly'},
-  {a:'#ec4899', b:'#fde68a', pat:'spots',   acc:'crown', eyes:'googly'},
-  {a:'#ef4444', b:'#fde047', pat:'stripes', acc:null,    eyes:'shades'},
-  {a:'#84cc16', b:'#166534', pat:'spots',   acc:null,    eyes:'googly'},
-  {a:'#8b5cf6', b:'#fdba74', pat:'stripes', acc:'hat',   eyes:'googly'},
-];
+      <!-- The 10x10 Board -->
+      <div class="board-wrapper" id="boardWrapper">
+        <!-- 100 Colorful Grid Tiles -->
+        <div id="boardGrid" class="board-grid"></div>
 
-/* =====================================================
-   BOARD GEOMETRY
-===================================================== */
-function center(n){
-  const idx = n - 1, row = Math.floor(idx / 10), c = idx % 10;
-  const col = row % 2 === 0 ? c : 9 - c;
-  return { x: col * S + S / 2, y: (9 - row) * S + S / 2, row, col };
-}
-const f1 = v => v.toFixed(1);
+        <!-- Custom SVG Layer for Snakes, Wooden Ladders & Escalators -->
+        <svg id="boardOverlay" viewBox="0 0 1000 1000" class="absolute inset-0 w-full h-full pointer-events-none z-20"></svg>
 
-/* ---------- Cartoon snake ---------- */
-const SNAKE_DATA = {};   // head -> {pts}
-function snakeSVG(head, tail, st, idx){
-  const A = center(head), B = center(tail);
-  const dx = B.x - A.x, dy = B.y - A.y, len = Math.hypot(dx, dy);
-  const ux = dx / len, uy = dy / len, px = -uy, py = ux;
-  const waves = Math.max(1.5, len / 150);
-  const amp = Math.min(55, 18 + len * 0.07);
-  const sgn = idx % 2 ? 1 : -1;
-  const N = Math.max(30, Math.round(len / 5));
-  const pts = [];
-  for (let i = 0; i <= N; i++){
-    const t = i / N;
-    const env = Math.pow(Math.sin(Math.PI * t), 0.8);
-    const off = Math.sin(t * waves * Math.PI * 2) * amp * env * sgn;
-    pts.push({ x: A.x + dx * t + px * off, y: A.y + dy * t + py * off });
-  }
-  SNAKE_DATA[head] = { pts };
-  const rad = i => 4.5 + 13.5 * Math.pow(1 - i / N, 0.7);
+        <!-- Player Tokens Layer -->
+        <div id="tokensLayer" class="absolute inset-0 pointer-events-none z-30"></div>
+      </div>
+    </div>
 
-  let out = '';
-  // soft shadow
-  for (let i = 0; i <= N; i += 2){
-    const p = pts[i];
-    out += `<circle cx="${f1(p.x + 5)}" cy="${f1(p.y + 8)}" r="${f1(rad(i) + 3)}" fill="rgba(0,0,0,.22)"/>`;
-  }
-  // outline
-  for (let i = N; i >= 0; i--){
-    const p = pts[i];
-    out += `<circle cx="${f1(p.x)}" cy="${f1(p.y)}" r="${f1(rad(i) + 3.5)}" fill="#16202e"/>`;
-  }
-  // body
-  for (let i = N; i >= 0; i--){
-    const p = pts[i], r = rad(i);
-    let col = st.a;
-    if (st.pat === 'stripes' && Math.floor(i / 5) % 2) col = st.b;
-    out += `<circle cx="${f1(p.x)}" cy="${f1(p.y)}" r="${f1(r)}" fill="${col}"/>`;
-    if (st.pat === 'spots' && i % 9 === 4 && i > 3) {
-      out += `<circle cx="${f1(p.x)}" cy="${f1(p.y)}" r="${f1(r * 0.5)}" fill="${st.b}" stroke="#16202e" stroke-opacity=".35" stroke-width="1.5"/>`;
+    <!-- Right / Bottom: Controls, Dice & Scoreboard -->
+    <div class="w-full max-w-[650px] lg:w-96 flex flex-col gap-3 sm:gap-4">
+
+      <!-- Status Banner -->
+      <div id="statusBanner" class="bg-white/95 backdrop-blur rounded-2xl p-3.5 sm:p-4 shadow-lg border-2 border-indigo-200 text-center">
+        <p id="statusTitle" class="font-display font-bold text-lg sm:text-xl text-slate-900">Player 1's Turn!</p>
+        <p id="statusSubtitle" class="text-xs sm:text-sm text-slate-500 mt-0.5">Tap the dice or button below to roll</p>
+      </div>
+
+      <!-- 3D Dice & Roll Action Card -->
+      <div class="bg-white/95 backdrop-blur rounded-3xl p-4 sm:p-6 shadow-xl border-2 border-amber-200 flex flex-row lg:flex-col items-center justify-around lg:justify-center gap-4">
+        <div id="diceClickArea" class="cursor-pointer p-2 rounded-2xl hover:bg-slate-50 transition" title="Click to roll dice">
+          <div class="dice-scene">
+            <div id="diceCube" class="dice-cube">
+              <!-- Face 1 -->
+              <div class="dice-face face-1">
+                <div></div><div></div><div></div>
+                <div></div><div class="pip red"></div><div></div>
+                <div></div><div></div><div></div>
+              </div>
+              <!-- Face 2 -->
+              <div class="dice-face face-2">
+                <div class="pip"></div><div></div><div></div>
+                <div></div><div></div><div></div>
+                <div></div><div></div><div class="pip"></div>
+              </div>
+              <!-- Face 3 -->
+              <div class="dice-face face-3">
+                <div class="pip"></div><div></div><div></div>
+                <div></div><div class="pip"></div><div></div>
+                <div></div><div></div><div class="pip"></div>
+              </div>
+              <!-- Face 4 -->
+              <div class="dice-face face-4">
+                <div class="pip"></div><div></div><div class="pip"></div>
+                <div></div><div></div><div></div>
+                <div class="pip"></div><div></div><div class="pip"></div>
+              </div>
+              <!-- Face 5 -->
+              <div class="dice-face face-5">
+                <div class="pip"></div><div></div><div class="pip"></div>
+                <div></div><div class="pip"></div><div></div>
+                <div class="pip"></div><div></div><div class="pip"></div>
+              </div>
+              <!-- Face 6 -->
+              <div class="dice-face face-6">
+                <div class="pip"></div><div></div><div class="pip"></div>
+                <div class="pip"></div><div></div><div class="pip"></div>
+                <div class="pip"></div><div></div><div class="pip"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-col items-center w-full max-w-[210px]">
+          <button id="rollBtn" type="button" class="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-display font-bold text-lg sm:text-xl shadow-lg shadow-indigo-500/30 active:scale-95 transition cursor-pointer">
+            🎲 Roll Dice
+          </button>
+          <span id="lastRollBadge" class="mt-2 text-xs font-semibold text-slate-400">
+            Ready to roll
+          </span>
+        </div>
+      </div>
+
+      <!-- Player Roster / Live Standings -->
+      <div class="bg-white/95 backdrop-blur rounded-3xl p-4 shadow-lg border border-slate-200">
+        <h3 class="font-display font-bold text-sm uppercase tracking-wider text-slate-400 mb-2.5 px-1">
+          Players &amp; Positions
+        </h3>
+        <div id="scoreboardList" class="grid grid-cols-2 lg:grid-cols-1 gap-2">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ==================== VICTORY MODAL ==================== -->
+  <div id="victoryModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 text-center shadow-2xl border-4 border-amber-400 transform transition-all">
+      <div class="text-5xl mb-3">🏆👑🎉</div>
+      <div id="winnerAvatarBox" class="w-24 h-24 rounded-full mx-auto mb-4 border-4 border-amber-400 shadow-lg overflow-hidden flex items-center justify-center bg-amber-100"></div>
+      <h2 id="winnerNameText" class="font-display font-bold text-3xl text-slate-900">Player 1 Wins!</h2>
+      <p class="text-slate-500 text-sm sm:text-base mt-1 mb-6">
+        Reached Tile 100 and conquered the snakes &amp; escalators!
+      </p>
+      <div class="flex flex-col sm:flex-row gap-3">
+        <button id="playAgainBtn" type="button" class="flex-1 py-3.5 px-5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-display font-bold text-lg shadow-md transition cursor-pointer">
+          🔄 Play Again
+        </button>
+        <button id="newPlayersBtn" type="button" class="flex-1 py-3.5 px-5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-display font-bold text-lg transition cursor-pointer">
+          👥 Change Players
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /**
+     * =========================================================================
+     * 1. SOUND ENGINE (Web Audio API - No external audio files needed)
+     * =========================================================================
+     */
+    class SoundFX {
+      constructor() {
+        this.ctx = null;
+        this.muted = false;
+      }
+
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (AudioContext) this.ctx = new AudioContext();
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+
+      playTone(freq, type, duration, delay = 0, gainVal = 0.15, slideTo = null) {
+        if (this.muted) return;
+        this.init();
+        if (!this.ctx) return;
+
+        const now = this.ctx.currentTime + delay;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, now);
+        if (slideTo) {
+          osc.frequency.exponentialRampToValueAtTime(slideTo, now + duration);
+        }
+
+        gain.gain.setValueAtTime(gainVal, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + duration);
+      }
+
+      diceRoll() {
+        for (let i = 0; i < 6; i++) {
+          this.playTone(180 + Math.random() * 220, 'triangle', 0.06, i * 0.09, 0.12);
+        }
+      }
+
+      stepHop(stepIndex) {
+        const base = 360 + (stepIndex % 6) * 35;
+        this.playTone(base, 'sine', 0.11, 0, 0.14, base * 1.25);
+      }
+
+      ladderClimb() {
+        const notes = [330, 392, 440, 523, 659, 784];
+        notes.forEach((n, idx) => {
+          this.playTone(n, 'triangle', 0.14, idx * 0.09, 0.16);
+        });
+      }
+
+      escalatorRide() {
+        // Smooth futuristic hum + ascending chime
+        this.playTone(220, 'sawtooth', 0.75, 0, 0.06, 580);
+        const notes = [440, 554, 659, 880];
+        notes.forEach((n, idx) => {
+          this.playTone(n, 'sine', 0.18, idx * 0.16, 0.14);
+        });
+      }
+
+      snakeBite() {
+        // Cartoonish descending whistle + hiss
+        this.playTone(620, 'sawtooth', 0.65, 0, 0.14, 130);
+        this.playTone(480, 'sine', 0.65, 0.05, 0.12, 95);
+      }
+
+      victory() {
+        const melody = [523.25, 659.25, 783.99, 1046.5, 783.99, 1046.5];
+        melody.forEach((n, i) => {
+          this.playTone(n, 'triangle', i === melody.length - 1 ? 0.5 : 0.16, i * 0.14, 0.2);
+        });
+      }
     }
-  }
-  // glossy highlight
-  for (let i = N; i >= 2; i -= 1){
-    const p = pts[i], r = rad(i);
-    out += `<circle cx="${f1(p.x - r * .3)}" cy="${f1(p.y - r * .35)}" r="${f1(r * .3)}" fill="#fff" opacity=".18"/>`;
-  }
-  // tail tip curl
-  const pt = pts[N];
-  out += `<circle cx="${f1(pt.x)}" cy="${f1(pt.y)}" r="4" fill="${st.b}" stroke="#16202e" stroke-width="2"/>`;
 
-  // head
-  const p0 = pts[0], p4 = pts[Math.min(5, N)];
-  const ang = Math.atan2(p0.y - p4.y, p0.x - p4.x) * 180 / Math.PI;
-  let eyes;
-  if (st.eyes === 'shades'){
-    eyes = `
-      <ellipse cx="13" cy="-11" rx="8.5" ry="7.5" fill="#111" stroke="#fff" stroke-width="1.5"/>
-      <ellipse cx="13" cy="11"  rx="8.5" ry="7.5" fill="#111" stroke="#fff" stroke-width="1.5"/>
-      <rect x="10" y="-4" width="6" height="8" fill="#111"/>
-      <ellipse cx="10" cy="-13" rx="2.6" ry="1.6" fill="#fff" opacity=".8"/>
-      <ellipse cx="10" cy="9"   rx="2.6" ry="1.6" fill="#fff" opacity=".8"/>`;
-  } else {
-    eyes = `
-      <circle cx="13" cy="-12" r="9" fill="#fff" stroke="#16202e" stroke-width="2.5"/>
-      <circle cx="13" cy="12"  r="9" fill="#fff" stroke="#16202e" stroke-width="2.5"/>
-      <circle cx="16.5" cy="-11" r="4.6" fill="#111"/><circle cx="16.5" cy="13" r="4.6" fill="#111"/>
-      <circle cx="18" cy="-12.8" r="1.7" fill="#fff"/><circle cx="18" cy="11.2" r="1.7" fill="#fff"/>`;
-  }
-  out += `<g transform="translate(${f1(p0.x)},${f1(p0.y)}) rotate(${f1(ang)})">
-    <g class="tongue">
-      <path d="M32 0 L50 0 M50 0 L58 -7 M50 0 L58 7" stroke="#16202e" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-      <path d="M32 0 L50 0 M50 0 L58 -7 M50 0 L58 7" stroke="#ff2d55" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-    </g>
-    <ellipse cx="10" cy="0" rx="27" ry="22" fill="${st.a}" stroke="#16202e" stroke-width="4"/>
-    <ellipse cx="17" cy="0" rx="16" ry="11" fill="${st.b}" opacity=".35"/>
-    <circle cx="-2" cy="-17" r="4.5" fill="#ff7aa8" opacity=".65"/><circle cx="-2" cy="17" r="4.5" fill="#ff7aa8" opacity=".65"/>
-    ${eyes}
-    <circle cx="33" cy="-4" r="1.9" fill="#16202e"/><circle cx="33" cy="4" r="1.9" fill="#16202e"/>
-  </g>`;
+    const sfx = new SoundFX();
 
-  // upright accessories
-  const hx = p0.x, hy = p0.y - 24;
-  if (st.acc === 'crown'){
-    out += `<g transform="translate(${f1(hx)},${f1(hy)})"><path d="M-14 4 L-14 -12 L-7 -4 L0 -15 L7 -4 L14 -12 L14 4 Z" fill="#fbbf24" stroke="#16202e" stroke-width="3" stroke-linejoin="round"/><circle cx="0" cy="-1" r="2.6" fill="#ef4444"/></g>`;
-  } else if (st.acc === 'bow'){
-    out += `<g transform="translate(${f1(hx)},${f1(hy + 4)})"><path d="M0 0 L-16 -9 L-16 9 Z M0 0 L16 -9 L16 9 Z" fill="#ec4899" stroke="#16202e" stroke-width="3" stroke-linejoin="round"/><circle cx="0" cy="0" r="4.5" fill="#f9a8d4" stroke="#16202e" stroke-width="2.5"/></g>`;
-  } else if (st.acc === 'hat'){
-    out += `<g transform="translate(${f1(hx)},${f1(hy + 4)})"><rect x="-10" y="-20" width="20" height="20" rx="2" fill="#1f2937" stroke="#16202e" stroke-width="3"/><rect x="-10" y="-7" width="20" height="5" fill="#ef4444"/><rect x="-18" y="-2" width="36" height="6" rx="3" fill="#1f2937" stroke="#16202e" stroke-width="3"/></g>`;
-  }
-  return out;
-}
+    /**
+     * =========================================================================
+     * 2. BOARD CONFIGURATION (Snakes, Wooden Ladders & Long Escalators)
+     * =========================================================================
+     * Standard ladders are moderate climbs.
+     * Long climbs (>= 35 tiles jump) automatically render as sleek ESCALATORS!
+     */
+    const JUMPS = {
+      // Ladders & Escalators (start -> end where end > start)
+      3:  { to: 22, type: 'ladder' },
+      8:  { to: 26, type: 'ladder' },
+      14: { to: 55, type: 'escalator' }, // +41 tiles Long Escalator!
+      20: { to: 38, type: 'ladder' },
+      28: { to: 84, type: 'escalator' }, // +56 tiles Mega Escalator!
+      40: { to: 59, type: 'ladder' },
+      51: { to: 67, type: 'ladder' },
+      63: { to: 81, type: 'ladder' },
+      71: { to: 91, type: 'ladder' },
 
-/* ---------- Wooden ladder ---------- */
-function ladderSVG(s, e){
-  const A = center(s), B = center(e);
-  const dx = B.x - A.x, dy = B.y - A.y, len = Math.hypot(dx, dy);
-  const ux = dx / len, uy = dy / len, px = -uy, py = ux, hw = 14;
-  const line = (pa, pb, stroke, w, extra='') => `<line x1="${pa.x}" y1="${pa.y}" x2="${pb.x}" y2="${pb.y}" stroke="${stroke}" stroke-width="${w}" stroke-linecap="round" ${extra}/>`;
-  const R = sgn => ({ a:{x:f1(A.x+px*hw*sgn), y:f1(A.y+py*hw*sgn)}, b:{x:f1(B.x+px*hw*sgn), y:f1(B.y+py*hw*sgn)} });
-  const L = R(-1), Rr = R(1);
-  let o = '';
-  // shadow
-  o += `<g transform="translate(6,8)" opacity=".28">${line(L.a,L.b,'#000',12)}${line(Rr.a,Rr.b,'#000',12)}</g>`;
-  // rails
-  for (const r of [L, Rr]){
-    o += line(r.a, r.b, '#4a2a10', 13);
-    o += line(r.a, r.b, '#b9783a', 8.5);
-    o += line({x:+r.a.x-1.6,y:+r.a.y-1.6}, {x:+r.b.x-1.6,y:+r.b.y-1.6}, '#e8b277', 2.4);
-  }
-  // rungs
-  const n = Math.max(3, Math.floor(len / 26));
-  for (let k = 1; k <= n; k++){
-    const t = k / (n + 1);
-    const cx = A.x + dx * t, cy = A.y + dy * t;
-    const a = { x: f1(cx - px * hw), y: f1(cy - py * hw) }, b = { x: f1(cx + px * hw), y: f1(cy + py * hw) };
-    o += line(a, b, '#4a2a10', 10);
-    o += line(a, b, '#d9984f', 6);
-    o += line({x:+a.x-1,y:+a.y-1.5}, {x:+b.x-1,y:+b.y-1.5}, '#f0c48f', 1.6);
-    o += `<circle cx="${a.x}" cy="${a.y}" r="2" fill="#3a1f0a"/><circle cx="${b.x}" cy="${b.y}" r="2" fill="#3a1f0a"/>`;
-  }
-  return o;
-}
-
-/* ---------- Escalator (for very long climbs) ---------- */
-function escalatorSVG(s, e){
-  const A = center(s), B = center(e);
-  const dx = B.x - A.x, dy = B.y - A.y, len = Math.hypot(dx, dy);
-  const ux = dx / len, uy = dy / len, px = -uy, py = ux;
-  const ang = Math.atan2(dy, dx) * 180 / Math.PI;
-  const ln = (x1,y1,x2,y2,stroke,w,extra='') => `<line x1="${f1(x1)}" y1="${f1(y1)}" x2="${f1(x2)}" y2="${f1(y2)}" stroke="${stroke}" stroke-width="${w}" ${extra}/>`;
-  let o = '';
-  o += ln(A.x+6, A.y+9, B.x+6, B.y+9, 'rgba(0,0,0,.28)', 50, 'stroke-linecap="round"');
-  // side handrails
-  for (const sg of [-1, 1]){
-    const ox = px * 24 * sg, oy = py * 24 * sg;
-    o += ln(A.x+ox, A.y+oy, B.x+ox, B.y+oy, '#1b2631', 10, 'stroke-linecap="round"');
-    o += ln(A.x+ox-1.5, A.y+oy-1.5, B.x+ox-1.5, B.y+oy-1.5, '#7f8c9a', 2.5, 'stroke-linecap="round"');
-  }
-  // bed
-  o += ln(A.x, A.y, B.x, B.y, '#34495e', 42);
-  o += ln(A.x, A.y, B.x, B.y, '#aab7b8', 34);
-  // moving steps
-  o += ln(A.x, A.y, B.x, B.y, '#f4f6f7', 34, 'class="esc" stroke-dasharray="7 9"');
-  o += ln(A.x, A.y, B.x, B.y, '#6c7a89', 34, 'class="escg" stroke-dasharray="1.6 14.4"');
-  // end plates
-  for (const P of [A, B]){
-    o += `<g transform="translate(${f1(P.x)},${f1(P.y)}) rotate(${f1(ang)})">
-      <rect x="-7" y="-24" width="14" height="48" rx="3" fill="#f1c40f" stroke="#1b2631" stroke-width="3"/>
-      <path d="M-7 -14 H7 M-7 -4 H7 M-7 6 H7 M-7 16 H7" stroke="#1b2631" stroke-width="2.2"/>
-    </g>`;
-  }
-  // direction arrow badge near the base
-  const bx = A.x + ux * 40, by = A.y + uy * 40;
-  o += `<g transform="translate(${f1(bx)},${f1(by)}) rotate(${f1(ang)})"><circle r="11" fill="#22c55e" stroke="#fff" stroke-width="2.5"/><path d="M-4 -5 L5 0 L-4 5 Z" fill="#fff"/></g>`;
-  return o;
-}
-
-/* ---------- Build the whole board ---------- */
-function buildBoard(){
-  let svg = `<svg id="boardSvg" viewBox="0 0 ${SIZE} ${SIZE}" xmlns="http://www.w3.org/2000/svg">
-    <defs><linearGradient id="gloss" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#fff" stop-opacity=".45"/><stop offset=".5" stop-color="#fff" stop-opacity=".05"/><stop offset="1" stop-color="#000" stop-opacity=".14"/>
-    </linearGradient></defs>`;
-  for (let n = 1; n <= 100; n++){
-    const c = center(n), x = c.x - 50, y = c.y - 50;
-    const hue = (c.col * 37 + c.row * 23) % 360;
-    const light = 58 + ((c.row + c.col) % 2) * 9;
-    svg += `<rect x="${x}" y="${y}" width="100" height="100" fill="hsl(${hue} 82% ${light}%)"/>`;
-    svg += `<rect x="${x+2}" y="${y+2}" width="96" height="96" rx="10" fill="url(#gloss)" stroke="rgba(255,255,255,.6)" stroke-width="2"/>`;
-    svg += `<text x="${x+10}" y="${y+27}" font-size="22" font-weight="800" fill="rgba(0,0,0,.42)" font-family="Baloo 2, Comic Sans MS, sans-serif">${n}</text>`;
-    if (n === 1)   svg += `<text x="${c.x}" y="${c.y+22}" text-anchor="middle" font-size="22" font-weight="800" fill="rgba(0,0,0,.6)" font-family="Baloo 2, sans-serif">START</text>`;
-    if (n === 100) svg += `<text x="${c.x}" y="${c.y+20}" text-anchor="middle" font-size="52">🏆</text>`;
-  }
-  // ladders & escalators
-  for (const [s, e] of Object.entries(LADDERS)){
-    const rows = center(+e).row - center(+s).row;
-    svg += rows >= ESCALATOR_MIN_ROWS ? escalatorSVG(+s, +e) : ladderSVG(+s, +e);
-  }
-  // snakes (on top)
-  Object.entries(SNAKES).forEach(([h, t], i) => { svg += snakeSVG(+h, +t, SNAKE_STYLES[i % SNAKE_STYLES.length], i); });
-  svg += '</svg>';
-  $('#boardHost').innerHTML = svg;
-}
-
-/* =====================================================
-   HELPERS
-===================================================== */
-const $ = s => document.querySelector(s);
-const sleep = ms => new Promise(r => setTimeout(r, ms));
-const ease = t => t < .5 ? 2*t*t : 1 - Math.pow(-2*t + 2, 2) / 2;
-
-/* =====================================================
-   SETUP SCREEN
-===================================================== */
-const cfg = {
-  count: 2,
-  players: [0,1,2,3].map(i => ({ name: 'Player ' + (i + 1), photo: null }))
-};
-
-function processPhoto(file){
-  return new Promise((res, rej) => {
-    const url = URL.createObjectURL(file), img = new Image();
-    img.onload = () => {
-      const sz = 192, c = document.createElement('canvas'); c.width = c.height = sz;
-      const m = Math.min(img.width, img.height);
-      c.getContext('2d').drawImage(img, (img.width - m) / 2, (img.height - m) / 2, m, m, 0, 0, sz, sz);
-      URL.revokeObjectURL(url); res(c.toDataURL('image/jpeg', .85));
+      // Cartoon Snakes (head -> tail where tail < head)
+      17: { to: 7,  type: 'snake', palette: { body: '#ef4444', stripe: '#fde047', belly: '#fecaca' } },
+      34: { to: 12, type: 'snake', palette: { body: '#8b5cf6', stripe: '#67e8f9', belly: '#ddd6fe' } },
+      47: { to: 25, type: 'snake', palette: { body: '#10b981', stripe: '#fef08a', belly: '#a7f3d0' } },
+      62: { to: 19, type: 'snake', palette: { body: '#f97316', stripe: '#ffffff', belly: '#fed7aa' } },
+      64: { to: 42, type: 'snake', palette: { body: '#ec4899', stripe: '#fde047', belly: '#fbcfe8' } },
+      87: { to: 36, type: 'snake', palette: { body: '#06b6d4', stripe: '#f43f5e', belly: '#cffafe' } },
+      95: { to: 56, type: 'snake', palette: { body: '#eab308', stripe: '#7c3aed', belly: '#fef9c3' } },
+      98: { to: 78, type: 'snake', palette: { body: '#e11d48', stripe: '#38bdf8', belly: '#ffe4e6' } }
     };
-    img.onerror = rej; img.src = url;
-  });
-}
 
-function renderSetup(){
-  document.querySelectorAll('.cbtn').forEach(b => b.classList.toggle('on', +b.dataset.n === cfg.count));
-  const wrap = $('#playerCards'); wrap.innerHTML = '';
-  for (let i = 0; i < cfg.count; i++){
-    const p = cfg.players[i];
-    const card = document.createElement('div');
-    card.className = 'pcard'; card.style.setProperty('--pc', COLORS[i]);
-    card.innerHTML = `
-      <label class="avatar-pick"><div class="avatar ${p.photo ? '' : 'empty'}">${p.photo ? '' : '📷'}</div>
-        <input type="file" accept="image/*" hidden></label>
-      <div class="pinfo">
-        <input class="pname" maxlength="12" placeholder="Name">
-        <span class="hint">Tap the circle to choose a photo from your gallery</span>
-        ${p.photo ? '<button class="linkbtn">Remove photo</button>' : ''}
-      </div>`;
-    const av = card.querySelector('.avatar');
-    if (p.photo) av.style.backgroundImage = `url(${p.photo})`;
-    const nm = card.querySelector('.pname'); nm.value = p.name;
-    nm.addEventListener('input', () => p.name = nm.value);
-    card.querySelector('input[type=file]').addEventListener('change', async e => {
-      const f = e.target.files[0]; if (!f) return;
-      try { p.photo = await processPhoto(f); renderSetup(); } catch { alert('Hindi ma-load yung photo. Try another one.'); }
-    });
-    const rm = card.querySelector('.linkbtn');
-    if (rm) rm.addEventListener('click', () => { p.photo = null; renderSetup(); });
-    wrap.appendChild(card);
-  }
-}
-document.querySelectorAll('.cbtn').forEach(b => b.addEventListener('click', () => { cfg.count = +b.dataset.n; renderSetup(); }));
+    // Vibrant cheerful color palette for tiles
+    const TILE_COLORS = [
+      '#ffe4e6', // Rose 100
+      '#fef3c7', // Amber 100
+      '#dcfce7', // Emerald 100
+      '#e0f2fe', // Sky 100
+      '#f3e8ff', // Purple 100
+      '#ffedd5', // Orange 100
+      '#ccfbf1', // Teal 100
+      '#fce7f3', // Pink 100
+      '#fef9c3', // Yellow 100
+      '#e0e7ff'  // Indigo 100
+    ];
 
-/* =====================================================
-   DICE
-===================================================== */
-const PIPS = {1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]};
-const FACE_T = {1:'rotateY(0deg)',6:'rotateY(180deg)',2:'rotateY(90deg)',5:'rotateY(-90deg)',3:'rotateX(90deg)',4:'rotateX(-90deg)'};
-const BASE = {1:[0,0],2:[0,-90],3:[-90,0],4:[90,0],5:[0,90],6:[0,180]};   // cube rotation that shows value on the front
-let rx = 0, ry = 0;
+    /**
+     * =========================================================================
+     * 3. PLAYER STATE & SETUP UI
+     * =========================================================================
+     */
+    const DEFAULT_COLORS = ['#ef4444', '#2563eb', '#10b981', '#f59e0b'];
+    const DEFAULT_EMOJIS = ['🦁', '🚀', '🦄', '🐼'];
 
-function buildDice(){
-  const cube = $('#cube'); cube.innerHTML = '';
-  for (let v = 1; v <= 6; v++){
-    const face = document.createElement('div'); face.className = 'face';
-    face.style.transform = `${FACE_T[v]} translateZ(38px)`;
-    for (let k = 0; k < 9; k++){
-      const cell = document.createElement('div');
-      if (PIPS[v].includes(k)){ const p = document.createElement('div'); p.className = 'pip'; cell.style.display = 'grid'; cell.appendChild(p); }
-      face.appendChild(cell);
+    let playerCount = 2;
+    let playerConfigs = [
+      { name: 'Player 1', color: DEFAULT_COLORS[0], photo: null, emoji: DEFAULT_EMOJIS[0] },
+      { name: 'Player 2', color: DEFAULT_COLORS[1], photo: null, emoji: DEFAULT_EMOJIS[1] },
+      { name: 'Player 3', color: DEFAULT_COLORS[2], photo: null, emoji: DEFAULT_EMOJIS[2] },
+      { name: 'Player 4', color: DEFAULT_COLORS[3], photo: null, emoji: DEFAULT_EMOJIS[3] }
+    ];
+
+    let players = [];
+    let currentPlayerIndex = 0;
+    let isAnimating = false;
+    let exactRollRequired = true;
+
+    const setupScreen = document.getElementById('setupScreen');
+    const gameScreen = document.getElementById('gameScreen');
+    const playerSetupList = document.getElementById('playerSetupList');
+    const countButtons = document.querySelectorAll('.count-btn');
+
+    function renderSetupCards() {
+      playerSetupList.innerHTML = '';
+      for (let i = 0; i < playerCount; i++) {
+        const cfg = playerConfigs[i];
+        const card = document.createElement('div');
+        card.className = 'bg-slate-50 rounded-2xl p-4 border-2 border-slate-200 flex items-center gap-3.5 shadow-sm';
+
+        const avatarPreview = cfg.photo
+          ? `<img src="${cfg.photo}" alt="${cfg.name}" class="w-full h-full object-cover" />`
+          : `<span class="text-2xl">${cfg.emoji}</span>`;
+
+        card.innerHTML = `
+          <div class="relative shrink-0">
+            <div class="w-16 h-16 rounded-full flex items-center justify-center overflow-hidden shadow-md border-4" style="background-color: ${cfg.color}; border-color: ${cfg.color};">
+              ${avatarPreview}
+            </div>
+            <label class="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white flex items-center justify-center shadow cursor-pointer text-xs" title="Upload photo from gallery">
+              📷
+              <input type="file" accept="image/*" class="hidden photo-input" data-index="${i}" />
+            </label>
+          </div>
+          <div class="flex-1 min-w-0">
+            <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Player ${i + 1}</label>
+            <input type="text" maxlength="14" value="${cfg.name}" data-index="${i}"
+              class="name-input w-full mt-0.5 px-3 py-1.5 rounded-xl bg-white border border-slate-300 font-bold text-slate-800 text-sm focus:outline-none focus:border-indigo-500"
+              placeholder="Enter name" />
+            <div class="flex items-center justify-between mt-2">
+              <div class="flex items-center gap-1.5">
+                ${DEFAULT_COLORS.map(c => `
+                  <button type="button" data-index="${i}" data-color="${c}"
+                    class="color-dot w-5 h-5 rounded-full border-2 ${cfg.color === c ? 'border-slate-900 scale-110' : 'border-white'} shadow-sm transition cursor-pointer"
+                    style="background-color: ${c};"></button>
+                `).join('')}
+              </div>
+              ${cfg.photo ? `<button type="button" data-index="${i}" class="clear-photo text-[11px] font-semibold text-rose-500 hover:underline cursor-pointer">Remove photo</button>` : `<span class="text-[11px] text-slate-400">Tap 📷 for photo</span>`}
+            </div>
+          </div>
+        `;
+        playerSetupList.appendChild(card);
+      }
+
+      // Attach listeners
+      document.querySelectorAll('.name-input').forEach(inp => {
+        inp.addEventListener('input', (e) => {
+          const idx = Number(e.target.dataset.index);
+          playerConfigs[idx].name = e.target.value.trim() || `Player ${idx + 1}`;
+        });
+      });
+
+      document.querySelectorAll('.color-dot').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const idx = Number(e.target.dataset.index);
+          playerConfigs[idx].color = e.target.dataset.color;
+          renderSetupCards();
+        });
+      });
+
+      document.querySelectorAll('.photo-input').forEach(inp => {
+        inp.addEventListener('change', (e) => {
+          const idx = Number(e.target.dataset.index);
+          const file = e.target.files && e.target.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            // Resize image via canvas to keep memory ultra-light and crisp
+            const img = new Image();
+            img.onload = () => {
+              const canvas = document.createElement('canvas');
+              const size = 180;
+              canvas.width = size;
+              canvas.height = size;
+              const ctx = canvas.getContext('2d');
+              const minSide = Math.min(img.width, img.height);
+              const sx = (img.width - minSide) / 2;
+              const sy = (img.height - minSide) / 2;
+              ctx.drawImage(img, sx, sy, minSide, minSide, 0, 0, size, size);
+              playerConfigs[idx].photo = canvas.toDataURL('image/jpeg', 0.85);
+              renderSetupCards();
+            };
+            img.src = ev.target.result;
+          };
+          reader.readAsDataURL(file);
+        });
+      });
+
+      document.querySelectorAll('.clear-photo').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const idx = Number(e.target.dataset.index);
+          playerConfigs[idx].photo = null;
+          renderSetupCards();
+        });
+      });
     }
-    cube.appendChild(face);
-  }
-  rx = 0; ry = 0;
-  cube.style.transition = 'none'; cube.style.transform = 'rotateX(0deg) rotateY(0deg)';
-}
-function align(cur, base, minAdd){ let t = base; while (t < cur + minAdd) t += 360; return t; }
-async function rollDiceAnim(v){
-  const cube = $('#cube'), dur = 1600;
-  rx = align(rx, BASE[v][0], 720 + 360 * Math.floor(Math.random() * 2));
-  ry = align(ry, BASE[v][1], 720 + 360 * Math.floor(Math.random() * 3));
-  const dw = $('#dwrap'), sh = $('#shadow');
-  dw.classList.remove('bounce'); sh.classList.remove('bounce'); void dw.offsetWidth;
-  dw.classList.add('bounce'); sh.classList.add('bounce');
-  cube.style.transition = `transform ${dur}ms cubic-bezier(.2,.8,.25,1)`;
-  cube.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`;
-  await sleep(dur + 80);
-}
 
-/* =====================================================
-   GAME STATE
-===================================================== */
-let players = [], turn = 0, busy = false, over = false;
+    countButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        playerCount = Number(btn.dataset.count);
+        countButtons.forEach(b => {
+          const active = Number(b.dataset.count) === playerCount;
+          b.className = active
+            ? 'count-btn py-2.5 rounded-2xl font-display font-bold text-lg border-2 border-indigo-600 bg-indigo-600 text-white shadow-md transition'
+            : 'count-btn py-2.5 rounded-2xl font-display font-bold text-lg border-2 border-slate-200 bg-slate-50 text-slate-700 hover:border-indigo-300 transition';
+        });
+        renderSetupCards();
+      });
+    });
 
-function offsetFor(i, n){
-  const t = { 2: [[-21,0],[21,0]], 3: [[-21,-17],[21,-17],[0,21]], 4: [[-21,-21],[21,-21],[-21,21],[21,21]] };
-  return t[n][i];
-}
-function tileXY(pl, tile){
-  const c = center(tile), o = offsetFor(pl.idx, players.length);
-  return { x: c.x + o[0], y: c.y + o[1] };
-}
-function placeToken(pl, x, y){ pl.el.style.left = (x / 10) + '%'; pl.el.style.top = (y / 10) + '%'; }
-function setTokenToTile(pl, tile, instant){
-  if (instant) pl.el.classList.add('nomove');
-  const p = tileXY(pl, tile); placeToken(pl, p.x, p.y);
-  if (instant){ void pl.el.offsetWidth; pl.el.classList.remove('nomove'); }
-}
-function hop(pl){ const i = pl.el.firstChild; i.classList.remove('hop'); void i.offsetWidth; i.classList.add('hop'); }
+    renderSetupCards();
 
-function animateAlong(pl, pts, dur, mode){
-  return new Promise(res => {
-    const o = offsetFor(pl.idx, players.length);
-    const path = pts.map(p => ({ x: p.x + o[0], y: p.y + o[1] }));
-    const inner = pl.el.firstChild;
-    pl.el.classList.add('nomove'); inner.classList.remove('hop'); inner.classList.add(mode);
-    const t0 = performance.now();
-    (function frame(now){
-      const t = Math.min(1, (now - t0) / dur), e = ease(t);
-      const f = e * (path.length - 1), i = Math.min(path.length - 2, Math.floor(f)), k = f - i;
-      const a = path[i], b = path[i + 1];
-      placeToken(pl, a.x + (b.x - a.x) * k, a.y + (b.y - a.y) * k);
-      if (t < 1) requestAnimationFrame(frame);
-      else { inner.classList.remove(mode); pl.el.classList.remove('nomove'); res(); }
-    })(t0);
-  });
-}
+    /**
+     * =========================================================================
+     * 4. BOARD GEOMETRY & SVG RENDERING (Snakes, Wooden Ladders & Escalators)
+     * =========================================================================
+     */
+    const boardGrid = document.getElementById('boardGrid');
+    const boardOverlay = document.getElementById('boardOverlay');
 
-let toastTimer;
-function toast(msg){
-  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
-  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 1500);
-}
-function log(msg){
-  const l = $('#log'); const d = document.createElement('div'); d.textContent = msg; l.prepend(d);
-}
+    // Returns { row (0 top to 9 bottom), col (0 left to 9 right), cx (0-1000), cy (0-1000) }
+    function getTileCoords(tileNum) {
+      const clamped = Math.max(1, Math.min(100, tileNum));
+      const zeroIdx = clamped - 1;
+      const rowFromBottom = Math.floor(zeroIdx / 10);
+      const row = 9 - rowFromBottom;
+      const colInRow = zeroIdx % 10;
+      const col = (rowFromBottom % 2 === 0) ? colInRow : (9 - colInRow);
 
-function initials(name){ return (name.trim()[0] || '?').toUpperCase(); }
+      const cx = col * 100 + 50;
+      const cy = row * 100 + 50;
+      return { row, col, cx, cy };
+    }
 
-function buildTokens(){
-  const layer = $('#tokens'); layer.innerHTML = '';
-  players.forEach(pl => {
-    const el = document.createElement('div');
-    el.className = 'token' + (pl.photo ? '' : ' nophoto');
-    el.style.setProperty('--pc', pl.color);
-    const inner = document.createElement('div'); inner.className = 'in';
-    if (pl.photo) inner.style.backgroundImage = `url(${pl.photo})`; else inner.textContent = initials(pl.name);
-    el.appendChild(inner); layer.appendChild(el); pl.el = el;
-  });
-}
+    function buildBoardTiles() {
+      boardGrid.innerHTML = '';
+      for (let r = 0; r < 10; r++) {
+        const rowFromBottom = 9 - r;
+        for (let c = 0; c < 10; c++) {
+          const colInRow = (rowFromBottom % 2 === 0) ? c : (9 - c);
+          const tileNum = rowFromBottom * 10 + colInRow + 1;
 
-function renderPanel(){
-  const box = $('#players'); box.innerHTML = '';
-  players.forEach((pl, i) => {
-    const row = document.createElement('div');
-    row.className = 'prow' + (i === turn && !over ? ' active' : ''); row.style.setProperty('--pc', pl.color);
-    const av = document.createElement('div'); av.className = 'av';
-    if (pl.photo) av.style.backgroundImage = `url(${pl.photo})`; else av.textContent = initials(pl.name);
-    const meta = document.createElement('div'); meta.className = 'meta';
-    meta.innerHTML = `<div class="nm"></div><div class="tl">Tile ${pl.pos} / 100</div><div class="bar"><i style="width:${pl.pos}%"></i></div>`;
-    meta.querySelector('.nm').textContent = pl.name;
-    row.append(av, meta); box.appendChild(row);
-  });
-  const cur = players[turn];
-  $('#turnLabel').innerHTML = over ? 'Game over!' : `Turn: <b style="--pc:${cur.color};color:${cur.color}"></b>`;
-  if (!over) $('#turnLabel b').textContent = cur.name;
-  players.forEach((pl, i) => pl.el.classList.toggle('active', i === turn && !over));
-}
+          const tile = document.createElement('div');
+          tile.className = 'tile';
+          const colorIdx = (tileNum * 3 + r) % TILE_COLORS.length;
+          tile.style.backgroundColor = TILE_COLORS[colorIdx];
 
-/* =====================================================
-   TURN LOGIC
-===================================================== */
-function stepPath(pos, roll){
-  const arr = []; let p = pos, dir = 1;
-  for (let i = 0; i < roll; i++){ if (p === 100) dir = -1; p += dir; arr.push(p); }
-  return arr;
-}
+          let badge = '';
+          if (tileNum === 1) {
+            tile.style.backgroundColor = '#bbf7d0';
+            badge = `<span class="text-[8px] sm:text-[10px] font-extrabold text-emerald-800 uppercase tracking-tighter">START</span>`;
+          } else if (tileNum === 100) {
+            tile.style.backgroundColor = '#fde047';
+            badge = `<span class="text-[9px] sm:text-[11px] font-extrabold text-amber-900">👑 GOAL</span>`;
+          } else if (JUMPS[tileNum]) {
+            const j = JUMPS[tileNum];
+            if (j.type === 'escalator') {
+              badge = `<span class="text-[8px] sm:text-[10px] font-bold text-cyan-800">🛗→${j.to}</span>`;
+            } else if (j.type === 'ladder') {
+              badge = `<span class="text-[8px] sm:text-[10px] font-bold text-amber-800">🪜→${j.to}</span>`;
+            } else {
+              badge = `<span class="text-[8px] sm:text-[10px] font-bold text-rose-700">🐍→${j.to}</span>`;
+            }
+          }
 
-async function takeTurn(){
-  if (busy || over) return;
-  busy = true; $('#rollBtn').disabled = true;
-  const pl = players[turn];
-  const v = 1 + Math.floor(Math.random() * 6);
-  $('#rolled').innerHTML = '&nbsp;';
-  await rollDiceAnim(v);
-  $('#rolled').textContent = `${pl.name} rolled a ${v}!`;
-  log(`${pl.name} rolled ${v}`);
-  await sleep(300);
+          tile.innerHTML = `
+            <span class="tile-num">${tileNum}</span>
+            <div class="self-end leading-none z-10">${badge}</div>
+          `;
+          boardGrid.appendChild(tile);
+        }
+      }
+    }
 
-  // walk tile by tile
-  const path = stepPath(pl.pos, v);
-  if (pl.pos + v > 100) toast('Sobra! Bounce back ↩');
-  for (const t of path){
-    pl.pos = t; setTokenToTile(pl, t); hop(pl); renderPanel();
-    await sleep(260);
-  }
-  await sleep(150);
+    function renderBoardOverlay() {
+      let svgHTML = `
+        <defs>
+          <filter id="dropShadow" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="5" stdDeviation="4" flood-color="#0f172a" flood-opacity="0.28"/>
+          </filter>
+          <linearGradient id="woodRail" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#92400e"/>
+            <stop offset="50%" stop-color="#d97706"/>
+            <stop offset="100%" stop-color="#78350f"/>
+          </linearGradient>
+          <linearGradient id="metalRail" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#334155"/>
+            <stop offset="50%" stop-color="#94a3b8"/>
+            <stop offset="100%" stop-color="#1e293b"/>
+          </linearGradient>
+          <linearGradient id="glassSide" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.45"/>
+            <stop offset="100%" stop-color="#0284c7" stop-opacity="0.25"/>
+          </linearGradient>
+        </defs>
+      `;
 
-  // snake / ladder / escalator
-  if (SNAKES[pl.pos]){
-    const head = pl.pos, tail = SNAKES[head];
-    toast('🐍 Nakagat ng ahas!'); log(`${pl.name} got bitten! ${head} → ${tail}`);
-    await sleep(600);
-    const pts = SNAKE_DATA[head].pts;
-    await animateAlong(pl, pts, Math.max(1100, pts.length * 22), 'slide');
-    pl.pos = tail; setTokenToTile(pl, tail, true); hop(pl);
-  } else if (LADDERS[pl.pos]){
-    const base = pl.pos, top = LADDERS[base];
-    const A = center(base), B = center(top);
-    const rows = B.row - A.row, esc = rows >= ESCALATOR_MIN_ROWS;
-    toast(esc ? '🛗 Escalator! Taas na!' : '🪜 Umakyat!'); log(`${pl.name} ${esc ? 'rode the escalator' : 'climbed the ladder'}: ${base} → ${top}`);
-    await sleep(600);
-    const len = Math.hypot(B.x - A.x, B.y - A.y);
-    await animateAlong(pl, [A, B], esc ? Math.max(1400, len * 3.6) : Math.max(1200, len * 4.4), esc ? 'ride' : 'climb');
-    pl.pos = top; setTokenToTile(pl, top, true); hop(pl);
-  }
-  renderPanel();
-  await sleep(250);
+      // 1. Draw Ladders & Escalators first (underneath snakes)
+      Object.entries(JUMPS).forEach(([startStr, jump]) => {
+        const start = Number(startStr);
+        if (jump.type === 'ladder') {
+          svgHTML += drawWoodenLadder(start, jump.to);
+        } else if (jump.type === 'escalator') {
+          svgHTML += drawEscalator(start, jump.to);
+        }
+      });
 
-  if (pl.pos === 100){ over = true; renderPanel(); showWinner(pl); busy = false; return; }
+      // 2. Draw Catchy Cartoon Snakes on top
+      Object.entries(JUMPS).forEach(([startStr, jump]) => {
+        const start = Number(startStr);
+        if (jump.type === 'snake') {
+          svgHTML += drawCartoonSnake(start, jump.to, jump.palette);
+        }
+      });
 
-  if (v === 6){ toast('🎉 6! Roll ulit!'); log(`${pl.name} gets another turn`); }
-  else turn = (turn + 1) % players.length;
-  renderPanel();
-  busy = false; $('#rollBtn').disabled = false;
-}
+      boardOverlay.innerHTML = svgHTML;
+    }
 
-/* =====================================================
-   WINNER / FLOW
-===================================================== */
-function showWinner(pl){
-  const w = $('#winner'), card = $('#wcard');
-  card.innerHTML = `<div class="big" style="--pc:${pl.color}">${pl.photo ? '' : initials(pl.name)}</div>
-    <h2>🏆 <span id="wn"></span> wins!</h2><p>Nakarating sa tile 100!</p>
-    <div class="btnrow"><button class="smallbtn" id="againBtn">↻ Play again</button><button class="smallbtn" id="newBtn">⚙ New setup</button></div>`;
-  const big = card.querySelector('.big'); big.style.background = pl.photo ? `url(${pl.photo}) center/cover` : pl.color;
-  $('#wn').textContent = pl.name;
-  w.querySelectorAll('.conf').forEach(c => c.remove());
-  const cols = ['#f43f5e','#fbbf24','#22c55e','#3b82f6','#a855f7','#fff'];
-  for (let i = 0; i < 90; i++){
-    const c = document.createElement('div'); c.className = 'conf';
-    c.style.left = Math.random() * 100 + '%'; c.style.background = cols[i % cols.length];
-    c.style.animationDuration = (2 + Math.random() * 3) + 's'; c.style.animationDelay = (-Math.random() * 4) + 's';
-    w.appendChild(c);
-  }
-  w.classList.remove('hidden');
-  $('#againBtn').onclick = () => { w.classList.add('hidden'); startGame(); };
-  $('#newBtn').onclick = () => { w.classList.add('hidden'); goSetup(); };
-}
+    function drawWoodenLadder(fromTile, toTile) {
+      const p1 = getTileCoords(fromTile);
+      const p2 = getTileCoords(toTile);
+      const dx = p2.cx - p1.cx;
+      const dy = p2.cy - p1.cy;
+      const len = Math.hypot(dx, dy);
+      const nx = (-dy / len) * 20; // half-width of ladder = 20
+      const ny = (dx / len) * 20;
 
-function startGame(){
-  players = cfg.players.slice(0, cfg.count).map((p, i) => ({
-    idx: i, name: (p.name.trim() || 'Player ' + (i + 1)), photo: p.photo, color: COLORS[i], pos: 1, el: null
-  }));
-  turn = 0; busy = false; over = false;
-  $('#setup').classList.add('hidden'); $('#game').classList.remove('hidden');
-  $('#log').innerHTML = ''; $('#rolled').innerHTML = '&nbsp;'; $('#rollBtn').disabled = false;
-  buildBoard(); buildTokens(); buildDice();
-  players.forEach(pl => setTokenToTile(pl, 1, true));
-  renderPanel(); log('Game started! Roll the dice 🎲');
-}
-function goSetup(){ $('#game').classList.add('hidden'); $('#setup').classList.remove('hidden'); renderSetup(); }
+      const r1x1 = p1.cx + nx, r1y1 = p1.cy + ny;
+      const r1x2 = p2.cx + nx, r1y2 = p2.cy + ny;
+      const r2x1 = p1.cx - nx, r2y1 = p1.cy - ny;
+      const r2x2 = p2.cx - nx, r2y2 = p2.cy - ny;
 
-$('#startBtn').addEventListener('click', startGame);
-$('#rollBtn').addEventListener('click', takeTurn);
-$('#scene').addEventListener('click', () => { if (!$('#rollBtn').disabled) takeTurn(); });
-$('#restartBtn').addEventListener('click', () => { if (confirm('Restart the game?')) startGame(); });
-$('#setupBtn').addEventListener('click', goSetup);
+      const steps = Math.max(4, Math.floor(len / 34));
+      let rungs = '';
+      for (let i = 1; i < steps; i++) {
+        const t = i / steps;
+        const lx = r1x1 + (r1x2 - r1x1) * t;
+        const ly = r1y1 + (r1y2 - r1y1) * t;
+        const rx = r2x1 + (r2x2 - r2x1) * t;
+        const ry = r2y1 + (r2y2 - r2y1) * t;
+        rungs += `
+          <line x1="${lx}" y1="${ly}" x2="${rx}" y2="${ry}" stroke="#78350f" stroke-width="9" stroke-linecap="round"/>
+          <line x1="${lx}" y1="${ly}" x2="${rx}" y2="${ry}" stroke="#fbbf24" stroke-width="4" stroke-linecap="round"/>
+        `;
+      }
 
-renderSetup();
-</script>
+      return `
+        <g filter="url(#dropShadow)">
+          ${rungs}
+          <line x1="${r1x1}" y1="${r1y1}" x2="${r1x2}" y2="${r1y2}" stroke="url(#woodRail)" stroke-width="11" stroke-linecap="round"/>
+          <line x1="${r2x1}" y1="${r2y1}" x2="${r2x2}" y2="${r2y2}" stroke="url(#woodRail)" stroke-width="11" stroke-linecap="round"/>
+        </g>
+      `;
+    }
+
+    function drawEscalator(fromTile, toTile) {
+      const p1 = getTileCoords(fromTile);
+      const p2 = getTileCoords(toTile);
+      const dx = p2.cx - p1.cx;
+      const dy = p2.cy - p1.cy;
+      const len = Math.hypot(dx, dy);
+      const nx = (-dy / len) * 26;
+      const ny = (dx / len) * 26;
+
+      const r1x1 = p1.cx + nx, r1y1 = p1.cy + ny;
+      const r1x2 = p2.cx + nx, r1y2 = p2.cy + ny;
+      const r2x1 = p1.cx - nx, r2y1 = p1.cy - ny;
+      const r2x2 = p2.cx - nx, r2y2 = p2.cy - ny;
+
+      return `
+        <g filter="url(#dropShadow)">
+          <!-- Escalator Metallic Track Bed -->
+          <line x1="${p1.cx}" y1="${p1.cy}" x2="${p2.cx}" y2="${p2.cy}" stroke="#1e293b" stroke-width="46" stroke-linecap="round"/>
+          <line x1="${p1.cx}" y1="${p1.cy}" x2="${p2.cx}" y2="${p2.cy}" stroke="#475569" stroke-width="38" stroke-linecap="round"/>
+          <!-- Animated Moving Steps -->
+          <line x1="${p1.cx}" y1="${p1.cy}" x2="${p2.cx}" y2="${p2.cy}"
+                stroke="#e2e8f0" stroke-width="30" stroke-dasharray="8 16" class="escalator-steps"/>
+          <!-- Yellow Safety Side Strips -->
+          <line x1="${r1x1}" y1="${r1y1}" x2="${r1x2}" y2="${r1y2}" stroke="#facc15" stroke-width="12" stroke-linecap="round"/>
+          <line x1="${r2x1}" y1="${r2y1}" x2="${r2x2}" y2="${r2y2}" stroke="#facc15" stroke-width="12" stroke-linecap="round"/>
+          <!-- Black Rubber Handrails -->
+          <line x1="${r1x1}" y1="${r1y1}" x2="${r1x2}" y2="${r1y2}" stroke="#0f172a" stroke-width="6" stroke-linecap="round"/>
+          <line x1="${r2x1}" y1="${r2y1}" x2="${r2x2}" y2="${r2y2}" stroke="#0f172a" stroke-width="6" stroke-linecap="round"/>
+          <!-- Entry & Exit Landing Plates -->
+          <circle cx="${p1.cx}" cy="${p1.cy}" r="22" fill="#0ea5e9" stroke="#ffffff" stroke-width="3"/>
+          <text x="${p1.cx}" y="${p1.cy + 5}" text-anchor="middle" fill="#ffffff" font-size="16" font-weight="bold">UP</text>
+          <circle cx="${p2.cx}" cy="${p2.cy}" r="18" fill="#10b981" stroke="#ffffff" stroke-width="3"/>
+        </g>
+      `;
+    }
+
+    function drawCartoonSnake(headTile, tailTile, palette) {
+      const head = getTileCoords(headTile);
+      const tail = getTileCoords(tailTile);
+
+      const dx = tail.cx - head.cx;
+      const dy = tail.cy - head.cy;
+      const len = Math.hypot(dx, dy);
+      const perpX = -dy / len;
+      const perpY = dx / len;
+
+      // Create a smooth S-curve using cubic Bezier control points
+      const waveAmp = Math.min(95, Math.max(45, len * 0.24));
+      const cp1x = head.cx + dx * 0.32 + perpX * waveAmp;
+      const cp1y = head.cy + dy * 0.32 + perpY * waveAmp;
+      const cp2x = head.cx + dx * 0.68 - perpX * waveAmp;
+      const cp2y = head.cy + dy * 0.68 - perpY * waveAmp;
+
+      const pathD = `M ${head.cx} ${head.cy} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${tail.cx} ${tail.cy}`;
+
+      // Calculate head angle pointing away from first curve segment
+      const headAngle = Math.atan2(head.cy - cp1y, head.cx - cp1x) * (180 / Math.PI);
+
+      return `
+        <g filter="url(#dropShadow)">
+          <!-- Dark Outline for Cartoon Pop -->
+          <path d="${pathD}" fill="none" stroke="#0f172a" stroke-width="30" stroke-linecap="round"/>
+          <!-- Main Snake Body -->
+          <path d="${pathD}" fill="none" stroke="${palette.body}" stroke-width="23" stroke-linecap="round"/>
+          <!-- Playful Stripes / Spots along spine -->
+          <path d="${pathD}" fill="none" stroke="${palette.stripe}" stroke-width="14" stroke-dasharray="10 22" stroke-linecap="round"/>
+          <!-- Highlight shine -->
+          <path d="${pathD}" fill="none" stroke="#ffffff" stroke-opacity="0.35" stroke-width="5" stroke-linecap="round"/>
+
+          <!-- Cartoon Snake Head -->
+          <g transform="translate(${head.cx}, ${head.cy}) rotate(${headAngle})">
+            <!-- Forked Red Tongue -->
+            <path d="M 18 0 L 34 -6 L 29 0 L 34 6 Z" fill="#ef4444" stroke="#7f1d1d" stroke-width="1.5"/>
+            <!-- Head Shape -->
+            <ellipse cx="4" cy="0" rx="22" ry="18" fill="${palette.body}" stroke="#0f172a" stroke-width="3.5"/>
+            <!-- Cheeks -->
+            <circle cx="8" cy="-11" r="4" fill="#fda4af" opacity="0.8"/>
+            <circle cx="8" cy="11" r="4" fill="#fda4af" opacity="0.8"/>
+            <!-- Big Googly Cartoon Eyes -->
+            <circle cx="8" cy="-8" r="6.5" fill="#ffffff" stroke="#0f172a" stroke-width="2"/>
+            <circle cx="10" cy="-8" r="3" fill="#0f172a"/>
+            <circle cx="11" cy="-9" r="1.1" fill="#ffffff"/>
+
+            <circle cx="8" cy="8" r="6.5" fill="#ffffff" stroke="#0f172a" stroke-width="2"/>
+            <circle cx="10" cy="8" r="3" fill="#0f172a"/>
+            <circle cx="11" cy="7" r="1.1" fill="#ffffff"/>
+          </g>
+        </g>
+      `;
+    }
+
+    /**
+     * =========================================================================
+     * 5. GAMEPLAY, TOKENS & STEP-BY-STEP ANIMATION
+     * =========================================================================
+     */
+    const tokensLayer = document.getElementById('tokensLayer');
+    const scoreboardList = document.getElementById('scoreboardList');
+    const statusTitle = document.getElementById('statusTitle');
+    const statusSubtitle = document.getElementById('statusSubtitle');
+    const rollBtn = document.getElementById('rollBtn');
+    const diceCube = document.getElementById('diceCube');
+    const lastRollBadge = document.getElementById('lastRollBadge');
+
+    // Offsets so multiple tokens on the exact same tile don't cover each other
+    const TOKEN_OFFSETS = [
+      { dx: -16, dy: -16 },
+      { dx:  16, dy: -16 },
+      { dx: -16, dy:  16 },
+      { dx:  16, dy:  16 }
+    ];
+
+    function initGame() {
+      exactRollRequired = document.getElementById('exactRollToggle').checked;
+      players = [];
+      for (let i = 0; i < playerCount; i++) {
+        players.push({
+          id: i,
+          name: playerConfigs[i].name || `Player ${i + 1}`,
+          color: playerConfigs[i].color,
+          photo: playerConfigs[i].photo,
+          emoji: playerConfigs[i].emoji,
+          pos: 1
+        });
+      }
+
+      currentPlayerIndex = 0;
+      isAnimating = false;
+      rollBtn.disabled = false;
+
+      buildBoardTiles();
+      renderBoardOverlay();
+      renderTokens();
+      renderScoreboard();
+      updateTurnUI();
+      setDiceFace(1);
+    }
+
+    function renderTokens() {
+      tokensLayer.innerHTML = '';
+      players.forEach((p, idx) => {
+        const el = document.createElement('div');
+        el.id = `token-${idx}`;
+        el.className = `player-token ${idx === currentPlayerIndex ? 'active-turn' : ''}`;
+        el.style.backgroundColor = p.color;
+        el.style.borderColor = '#ffffff';
+
+        if (p.photo) {
+          el.innerHTML = `<img src="${p.photo}" alt="${p.name}" />`;
+        } else {
+          el.innerHTML = `<span class="text-sm sm:text-base">${p.emoji}</span>`;
+        }
+
+        tokensLayer.appendChild(el);
+        positionTokenElement(idx, p.pos, false);
+      });
+    }
+
+    function positionTokenElement(playerIdx, tileNum, isSliding = false) {
+      const el = document.getElementById(`token-${playerIdx}`);
+      if (!el) return;
+
+      if (isSliding) {
+        el.classList.add('sliding');
+      } else {
+        el.classList.remove('sliding');
+      }
+
+      const coords = getTileCoords(tileNum);
+      // Check if others share this tile to apply neat quadrant offset
+      const sameTilePlayers = players.filter(pl => pl.pos === tileNum);
+      let offsetX = 0, offsetY = 0;
+      if (sameTilePlayers.length > 1) {
+        const subIdx = playerIdx % TOKEN_OFFSETS.length;
+        offsetX = TOKEN_OFFSETS[subIdx].dx;
+        offsetY = TOKEN_OFFSETS[subIdx].dy;
+      }
+
+      const leftPct = ((coords.cx + offsetX) / 1000) * 100;
+      const topPct = ((coords.cy + offsetY) / 1000) * 100;
+      el.style.left = `${leftPct}%`;
+      el.style.top = `${topPct}%`;
+    }
+
+    function renderScoreboard() {
+      scoreboardList.innerHTML = '';
+      players.forEach((p, idx) => {
+        const isTurn = idx === currentPlayerIndex;
+        const avatarHtml = p.photo
+          ? `<img src="${p.photo}" alt="${p.name}" class="w-full h-full object-cover" />`
+          : `<span class="text-base">${p.emoji}</span>`;
+
+        const row = document.createElement('div');
+        row.className = `flex items-center justify-between p-2.5 rounded-2xl border-2 transition ${
+          isTurn
+            ? 'bg-indigo-50/90 border-indigo-500 shadow-sm'
+            : 'bg-slate-50 border-slate-100'
+        }`;
+
+        row.innerHTML = `
+          <div class="flex items-center gap-2.5 min-w-0">
+            <div class="w-9 h-9 rounded-full shrink-0 overflow-hidden flex items-center justify-center border-2 border-white shadow" style="background-color: ${p.color};">
+              ${avatarHtml}
+            </div>
+            <div class="truncate">
+              <p class="font-bold text-sm text-slate-800 truncate">${p.name}</p>
+              <p class="text-[11px] font-semibold ${isTurn ? 'text-indigo-600' : 'text-slate-400'}">
+                ${isTurn ? '● Active Turn' : 'Waiting'}
+              </p>
+            </div>
+          </div>
+          <div class="px-2.5 py-1 rounded-xl bg-white border border-slate-200 font-display font-bold text-sm text-slate-800 shadow-xs">
+            Tile ${p.pos}
+          </div>
+        `;
+        scoreboardList.appendChild(row);
+      });
+    }
+
+    function updateTurnUI() {
+      const p = players[currentPlayerIndex];
+      statusTitle.textContent = `${p.name}'s Turn!`;
+      statusTitle.style.color = p.color;
+      statusSubtitle.textContent = `Currently on Tile ${p.pos} — Roll the dice!`;
+
+      document.querySelectorAll('.player-token').forEach((tok, idx) => {
+        tok.classList.toggle('active-turn', idx === currentPlayerIndex);
+      });
+      renderScoreboard();
+    }
+
+    // Orient 3D CSS Cube so the rolled face faces front
+    function setDiceFace(val) {
+      const rotations = {
+        1: 'rotateX(0deg) rotateY(0deg)',
+        2: 'rotateX(0deg) rotateY(-90deg)',
+        3: 'rotateX(-90deg) rotateY(0deg)',
+        4: 'rotateX(90deg) rotateY(0deg)',
+        5: 'rotateX(0deg) rotateY(90deg)',
+        6: 'rotateX(0deg) rotateY(180deg)'
+      };
+      diceCube.style.transform = rotations[val] || rotations[1];
+    }
+
+    const sleep = (ms) => new Promise(res => setTimeout(res, ms));
+
+    async function handleRollDice() {
+      if (isAnimating) return;
+      isAnimating = true;
+      rollBtn.disabled = true;
+
+      const activePlayer = players[currentPlayerIndex];
+      const rolled = Math.floor(Math.random() * 6) + 1;
+
+      // 1. Roll 3D Dice Animation
+      sfx.diceRoll();
+      statusTitle.textContent = `${activePlayer.name} is rolling...`;
+      statusSubtitle.textContent = 'Good luck!';
+      diceCube.classList.add('rolling');
+
+      await sleep(800);
+
+      diceCube.classList.remove('rolling');
+      setDiceFace(rolled);
+      lastRollBadge.textContent = `${activePlayer.name} rolled a ${rolled}!`;
+
+      await sleep(300);
+
+      // 2. Calculate Step-by-Step Path
+      let targetPos = activePlayer.pos + rolled;
+      const path = [];
+
+      if (targetPos <= 100) {
+        for (let step = activePlayer.pos + 1; step <= targetPos; step++) {
+          path.push(step);
+        }
+      } else if (exactRollRequired) {
+        // Walk up to 100, then bounce backward
+        const overshoot = targetPos - 100;
+        for (let step = activePlayer.pos + 1; step <= 100; step++) {
+          path.push(step);
+        }
+        for (let b = 99; b >= 100 - overshoot; b--) {
+          path.push(b);
+        }
+        statusSubtitle.textContent = `Rolled ${rolled} — Bounced back from 100!`;
+      } else {
+        for (let step = activePlayer.pos + 1; step <= 100; step++) {
+          path.push(step);
+        }
+      }
+
+      // 3. Animate Hopping Tile-by-Tile
+      for (let i = 0; i < path.length; i++) {
+        activePlayer.pos = path[i];
+        sfx.stepHop(i);
+        positionTokenElement(currentPlayerIndex, activePlayer.pos, false);
+        renderScoreboard();
+        await sleep(240);
+      }
+
+      // 4. Check for Win at Tile 100
+      if (activePlayer.pos === 100) {
+        sfx.victory();
+        showVictoryModal(activePlayer);
+        return;
+      }
+
+      // 5. Check for Ladder, Escalator, or Snake
+      const jump = JUMPS[activePlayer.pos];
+      if (jump) {
+        await sleep(250);
+        if (jump.type === 'escalator') {
+          statusTitle.textContent = `🛗 MEGA ESCALATOR!`;
+          statusSubtitle.textContent = `${activePlayer.name} rides up from ${activePlayer.pos} to ${jump.to}!`;
+          sfx.escalatorRide();
+        } else if (jump.type === 'ladder') {
+          statusTitle.textContent = `🪜 CLIMBING LADDER!`;
+          statusSubtitle.textContent = `${activePlayer.name} climbs from ${activePlayer.pos} to ${jump.to}!`;
+          sfx.ladderClimb();
+        } else {
+          statusTitle.textContent = `🐍 OH NO, A SNAKE!`;
+          statusSubtitle.textContent = `${activePlayer.name} slides down from ${activePlayer.pos} to ${jump.to}!`;
+          sfx.snakeBite();
+        }
+
+        activePlayer.pos = jump.to;
+        positionTokenElement(currentPlayerIndex, activePlayer.pos, true);
+        renderScoreboard();
+        await sleep(850);
+
+        if (activePlayer.pos === 100) {
+          sfx.victory();
+          showVictoryModal(activePlayer);
+          return;
+        }
+      }
+
+      // Re-adjust offsets for all tokens after movement finishes
+      players.forEach((_, idx) => positionTokenElement(idx, players[idx].pos, false));
+
+      // 6. Next Player's Turn (Bonus roll on 6? Let's keep standard alternating turns, or bonus on 6!)
+      if (rolled === 6) {
+        statusTitle.textContent = `🎲 ${activePlayer.name} rolled a 6!`;
+        statusSubtitle.textContent = `Bonus roll! Go again, ${activePlayer.name}!`;
+        isAnimating = false;
+        rollBtn.disabled = false;
+      } else {
+        currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
+        isAnimating = false;
+        rollBtn.disabled = false;
+        updateTurnUI();
+      }
+    }
+
+    /**
+     * =========================================================================
+     * 6. VICTORY MODAL & CONFETTI CELEBRATION
+     * =========================================================================
+     */
+    const victoryModal = document.getElementById('victoryModal');
+    const winnerAvatarBox = document.getElementById('winnerAvatarBox');
+    const winnerNameText = document.getElementById('winnerNameText');
+    let confettiAnimId = null;
+
+    function showVictoryModal(winner) {
+      winnerNameText.textContent = `${winner.name} Wins!`;
+      winnerAvatarBox.style.backgroundColor = winner.color;
+      winnerAvatarBox.innerHTML = winner.photo
+        ? `<img src="${winner.photo}" alt="${winner.name}" class="w-full h-full object-cover" />`
+        : `<span class="text-5xl">${winner.emoji}</span>`;
+
+      victoryModal.classList.remove('hidden');
+      startConfetti();
+    }
+
+    function startConfetti() {
+      const canvas = document.getElementById('confettiCanvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      const pieces = Array.from({ length: 130 }, () => ({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height - canvas.height,
+        w: 8 + Math.random() * 8,
+        h: 6 + Math.random() * 6,
+        color: ['#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899'][Math.floor(Math.random() * 6)],
+        vy: 2.5 + Math.random() * 4,
+        vx: -2 + Math.random() * 4,
+        rot: Math.random() * 360,
+        vRot: -6 + Math.random() * 12
+      }));
+
+      function loop() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        pieces.forEach(p => {
+          p.x += p.vx;
+          p.y += p.vy;
+          p.rot += p.vRot;
+          if (p.y > canvas.height) p.y = -20;
+
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate((p.rot * Math.PI) / 180);
+          ctx.fillStyle = p.color;
+          ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+          ctx.restore();
+        });
+        confettiAnimId = requestAnimationFrame(loop);
+      }
+      loop();
+    }
+
+    function stopConfetti() {
+      if (confettiAnimId) cancelAnimationFrame(confettiAnimId);
+      const canvas = document.getElementById('confettiCanvas');
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    /**
+     * =========================================================================
+     * 7. EVENT LISTENERS
+     * =========================================================================
+     */
+    document.getElementById('startGameBtn').addEventListener('click', () => {
+      sfx.init();
+      setupScreen.classList.add('hidden');
+      gameScreen.classList.remove('hidden');
+      initGame();
+    });
+
+    document.getElementById('backToSetupBtn').addEventListener('click', () => {
+      stopConfetti();
+      victoryModal.classList.add('hidden');
+      gameScreen.classList.add('hidden');
+      setupScreen.classList.remove('hidden');
+    });
+
+    document.getElementById('playAgainBtn').addEventListener('click', () => {
+      stopConfetti();
+      victoryModal.classList.add('hidden');
+      initGame();
+    });
+
+    document.getElementById('newPlayersBtn').addEventListener('click', () => {
+      stopConfetti();
+      victoryModal.classList.add('hidden');
+      gameScreen.classList.add('hidden');
+      setupScreen.classList.remove('hidden');
+    });
+
+    rollBtn.addEventListener('click', handleRollDice);
+    document.getElementById('diceClickArea').addEventListener('click', handleRollDice);
+
+    document.getElementById('muteBtn').addEventListener('click', (e) => {
+      sfx.muted = !sfx.muted;
+      e.target.textContent = sfx.muted ? '🔇' : '🔊';
+    });
+
+    window.addEventListener('resize', () => {
+      if (!gameScreen.classList.contains('hidden')) {
+        players.forEach((_, idx) => positionTokenElement(idx, players[idx].pos, false));
+      }
+    });
+  </script>
 </body>
 </html>
