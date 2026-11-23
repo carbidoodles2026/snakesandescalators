@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Snakes, Ladders & Escalators — Neon Edition</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- PeerJS for Serverless WebRTC Online Multiplayer on GitHub Pages -->
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -21,6 +23,28 @@
       }
     }
 
+    /* Custom Houdini property for smooth rotating neon border gradient */
+    @property --border-angle {
+      syntax: '<angle>';
+      initial-value: 0deg;
+      inherits: false;
+    }
+
+    @keyframes spinNeonBorder {
+      0%   { --border-angle: 0deg; }
+      100% { --border-angle: 360deg; }
+    }
+
+    @keyframes chasePerimeter {
+      0%   { stroke-dashoffset: 0; }
+      100% { stroke-dashoffset: -120; }
+    }
+
+    @keyframes cornerPulse {
+      0%, 100% { transform: scale(1); filter: brightness(1); }
+      50%      { transform: scale(1.18); filter: brightness(1.4); }
+    }
+
     body {
       font-family: 'Plus Jakarta Sans', sans-serif;
       background: radial-gradient(circle at 20% 15%, #1e1b4b 0%, #090d16 55%, #05070c 100%);
@@ -35,7 +59,7 @@
       font-family: 'Fredoka', cursive, sans-serif;
     }
 
-    /* ==================== 3D GLOSSY WHITE DICE WITH RED PIPS ==================== */
+    /* ==================== PURE WHITE 3D DICE WITH RED PIPS ==================== */
     .dice-scene {
       width: var(--dice-size);
       height: var(--dice-size);
@@ -67,12 +91,12 @@
       position: absolute;
       width: 100%;
       height: 100%;
-      background: linear-gradient(145deg, #ffffff 0%, #f8fafc 65%, #e2e8f0 100%);
+      background: linear-gradient(145deg, #ffffff 0%, #ffffff 72%, #f1f5f9 100%);
       border-radius: 15px;
-      border: 2px solid #cbd5e1;
+      border: 2px solid #e2e8f0;
       box-shadow:
-        inset 0 4px 7px rgba(255, 255, 255, 1),
-        inset 0 -5px 9px rgba(15, 23, 42, 0.2),
+        inset 0 4px 8px rgba(255, 255, 255, 1),
+        inset 0 -4px 7px rgba(148, 163, 184, 0.25),
         0 6px 14px rgba(0, 0, 0, 0.45);
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -82,20 +106,20 @@
       backface-visibility: hidden;
     }
 
-    /* Classic Glossy Red Dots (Pips) */
+    /* Vibrant Crimson Red Dots (Pips) */
     .pip {
       width: 100%;
       height: 100%;
       border-radius: 9999px;
-      background: radial-gradient(circle at 35% 32%, #ff6b6b 0%, #ef4444 45%, #991b1b 100%);
+      background: radial-gradient(circle at 35% 32%, #ff5a5a 0%, #ef4444 45%, #dc2626 75%, #991b1b 100%);
       box-shadow:
-        inset 0 2px 3px rgba(69, 10, 10, 0.75),
-        0 1px 1px rgba(255, 255, 255, 0.9);
+        inset 0 2px 3px rgba(69, 10, 10, 0.7),
+        0 1px 1px rgba(255, 255, 255, 0.95);
       transform: scale(0.86);
     }
 
     .pip.ace {
-      transform: scale(1.12);
+      transform: scale(1.14);
     }
 
     .face-1 { transform: rotateY(0deg) translateZ(var(--dice-half)); }
@@ -105,21 +129,71 @@
     .face-5 { transform: rotateY(-90deg) translateZ(var(--dice-half)); }
     .face-6 { transform: rotateY(180deg) translateZ(var(--dice-half)); }
 
-    /* ==================== NEON BOARD & TILES ==================== */
+    /* ==================== ANIMATED ARCADE FRAME & NEON BOARD ==================== */
+    .arcade-frame {
+      position: relative;
+      width: 100%;
+      max-width: 668px;
+      padding: 12px;
+      border-radius: 30px;
+      background: conic-gradient(
+        from var(--border-angle),
+        #22d3ee,
+        #f43f5e,
+        #facc15,
+        #a3e635,
+        #c084fc,
+        #22d3ee
+      );
+      animation: spinNeonBorder 4.5s linear infinite;
+      box-shadow:
+        0 0 38px rgba(34, 211, 238, 0.4),
+        0 0 72px rgba(244, 63, 94, 0.25);
+    }
+
+    .marquee-track-svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 15;
+    }
+
+    .marquee-bulbs {
+      animation: chasePerimeter 1.4s linear infinite;
+    }
+
+    .marquee-pulses {
+      animation: chasePerimeter 2.2s linear infinite reverse;
+    }
+
+    .corner-gem {
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      border-radius: 9999px;
+      z-index: 25;
+      pointer-events: none;
+      border: 2.5px solid #ffffff;
+      box-shadow: 0 0 14px 3px rgba(255, 255, 255, 0.85);
+      animation: cornerPulse 1.8s ease-in-out infinite;
+    }
+
+    .corner-tl { top: 2px; left: 2px; background: radial-gradient(circle, #fef08a, #f59e0b); }
+    .corner-tr { top: 2px; right: 2px; background: radial-gradient(circle, #a5f3fc, #06b6d4); animation-delay: 0.45s; }
+    .corner-bl { bottom: 2px; left: 2px; background: radial-gradient(circle, #fbcfe8, #ec4899); animation-delay: 0.9s; }
+    .corner-br { bottom: 2px; right: 2px; background: radial-gradient(circle, #d9f99d, #65a30d); animation-delay: 1.35s; }
+
     .board-wrapper {
       aspect-ratio: 1 / 1;
       width: 100%;
-      max-width: 650px;
       position: relative;
-      border-radius: 22px;
+      border-radius: 20px;
       background: #0b0f19;
-      box-shadow:
-        0 0 35px rgba(56, 189, 248, 0.35),
-        0 0 70px rgba(236, 72, 153, 0.2),
-        0 0 0 4px #22d3ee,
-        0 0 0 8px #0f172a,
-        0 0 0 11px #f43f5e;
+      box-shadow: inset 0 0 0 3px #090d16;
       overflow: hidden;
+      z-index: 10;
     }
 
     .board-grid {
@@ -342,6 +416,9 @@
                   📋 Copy
                 </button>
               </div>
+              <p id="peerConnectionStatus" class="text-[11px] font-semibold text-emerald-400 mt-1">
+                ● Connecting to PeerJS...
+              </p>
             </div>
             <button id="leaveRoomBtn" type="button" class="px-3 py-1.5 rounded-xl bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 text-xs font-bold cursor-pointer">
               Leave Room
@@ -357,7 +434,7 @@
             🎮 Start Online Match Now!
           </button>
           <p id="waitingHostNote" class="hidden text-center text-xs text-cyan-300 mt-2 animate-pulse">
-            Waiting for the room host to start the match...
+            Connected to Host! Waiting for host to start the match...
           </p>
         </div>
 
@@ -370,8 +447,8 @@
   <!-- ==================== GAME SCREEN ==================== -->
   <div id="gameScreen" class="hidden min-h-screen flex flex-col lg:flex-row items-center justify-center gap-4 lg:gap-8 p-3 sm:p-6 max-w-6xl mx-auto">
 
-    <!-- Left / Top: Neon Board -->
-    <div class="w-full max-w-[650px] flex flex-col items-center">
+    <!-- Left / Top: Neon Board with Moving Border Decorations -->
+    <div class="w-full max-w-[668px] flex flex-col items-center">
       <div class="w-full flex items-center justify-between mb-2.5 px-1">
         <button id="backToSetupBtn" type="button" class="px-3 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-slate-200 font-semibold text-xs sm:text-sm shadow border border-slate-700 transition cursor-pointer">
           ← Exit Game
@@ -396,11 +473,31 @@
         </div>
       </div>
 
-      <!-- The 10x10 Neon Board -->
-      <div class="board-wrapper" id="boardWrapper">
-        <div id="boardGrid" class="board-grid"></div>
-        <svg id="boardOverlay" viewBox="0 0 1000 1000" class="absolute inset-0 w-full h-full pointer-events-none z-20"></svg>
-        <div id="tokensLayer" class="absolute inset-0 pointer-events-none z-30"></div>
+      <!-- Animated Arcade Frame with Chasing Border Lights & Corner Gems -->
+      <div class="arcade-frame">
+        <div class="corner-gem corner-tl"></div>
+        <div class="corner-gem corner-tr"></div>
+        <div class="corner-gem corner-bl"></div>
+        <div class="corner-gem corner-br"></div>
+
+        <!-- Moving Marquee Lights & Energy Pulses Around Perimeter -->
+        <svg class="marquee-track-svg" viewBox="0 0 1000 1000" preserveAspectRatio="none">
+          <rect x="6" y="6" width="988" height="988" rx="28" ry="28"
+                fill="none" stroke="rgba(15,23,42,0.75)" stroke-width="10" />
+          <rect x="6" y="6" width="988" height="988" rx="28" ry="28"
+                fill="none" stroke="#ffffff" stroke-width="5"
+                stroke-linecap="round" stroke-dasharray="4 26" class="marquee-bulbs" />
+          <rect x="6" y="6" width="988" height="988" rx="28" ry="28"
+                fill="none" stroke="#fef08a" stroke-width="3"
+                stroke-linecap="round" stroke-dasharray="14 46" class="marquee-pulses" />
+        </svg>
+
+        <!-- The 10x10 Neon Board -->
+        <div class="board-wrapper" id="boardWrapper">
+          <div id="boardGrid" class="board-grid"></div>
+          <svg id="boardOverlay" viewBox="0 0 1000 1000" class="absolute inset-0 w-full h-full pointer-events-none z-20"></svg>
+          <div id="tokensLayer" class="absolute inset-0 pointer-events-none z-30"></div>
+        </div>
       </div>
     </div>
 
@@ -499,42 +596,17 @@
     </div>
   </div>
 
-  <script type="module">
+  <script>
     /**
      * =========================================================================
-     * 1. OPTIONAL ONLINE MULTIPLAYER ENGINE (Firebase Firestore + Fallback)
+     * 1. SERVERLESS WEBRTC ONLINE MULTIPLAYER ENGINE (PeerJS)
      * =========================================================================
      */
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-    let db = null;
-    let auth = null;
-    let currentUserId = 'local-' + Math.random().toString(36).slice(2, 9);
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'snakes-ladders-neon';
-
-    async function initOnlineBackend() {
-      try {
-        if (typeof __firebase_config !== 'undefined' && __firebase_config) {
-          const cfg = JSON.parse(__firebase_config);
-          const app = initializeApp(cfg);
-          auth = getAuth(app);
-          db = getFirestore(app);
-          if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-            await signInWithCustomToken(auth, __initial_auth_token);
-          } else {
-            await signInAnonymously(auth);
-          }
-          if (auth.currentUser) {
-            currentUserId = auth.currentUser.uid;
-          }
-        }
-      } catch (err) {
-        console.warn("Online sync unavailable, running in local mode:", err);
-      }
-    }
-    initOnlineBackend();
+    const PEER_PREFIX = 'sle-neon-';
+    let peerInstance = null;
+    let hostConnection = null;      // Used by Guest to talk to Host
+    let guestConnections = [];      // Used by Host to broadcast to Guests
+    let currentUserId = 'player-' + Math.random().toString(36).slice(2, 9);
 
     /**
      * =========================================================================
@@ -680,7 +752,7 @@
     let onlineProfile = { name: 'Player', photo: null, emoji: '😎' };
     let activeRoomCode = null;
     let isRoomHost = false;
-    let roomUnsubscribe = null;
+    let lobbyPlayers = [];
     let lastProcessedTurnKey = '';
 
     // Active Match State
@@ -698,7 +770,7 @@
     const tabOnlineBtn = document.getElementById('tabOnlineBtn');
     const playerSetupList = document.getElementById('playerSetupList');
 
-    // Helper: Compress gallery photo to crisp circular thumbnail (120x120) so it fits smoothly in memory & online rooms
+    // Helper: Compress gallery photo to lightweight 120x120 circular thumbnail for fast WebRTC sync
     function compressGalleryImage(file, callback) {
       const reader = new FileReader();
       reader.onload = (ev) => {
@@ -713,7 +785,7 @@
           const sx = (img.width - minSide) / 2;
           const sy = (img.height - minSide) / 2;
           ctx.drawImage(img, sx, sy, minSide, minSide, 0, 0, size, size);
-          callback(canvas.toDataURL('image/jpeg', 0.75));
+          callback(canvas.toDataURL('image/jpeg', 0.72));
         };
         img.src = ev.target.result;
       };
@@ -844,12 +916,13 @@
 
     /**
      * =========================================================================
-     * 5. ONLINE ROOM LOGIC (Create / Join / Real-time Sync)
+     * 5. PEERJS ONLINE ROOM LOGIC (Create / Join / Real-time WebRTC Broadcast)
      * =========================================================================
      */
     const onlineStatusMsg = document.getElementById('onlineStatusMsg');
     const onlineLobbyActions = document.getElementById('onlineLobbyActions');
     const onlineWaitingRoom = document.getElementById('onlineWaitingRoom');
+    const peerConnectionStatus = document.getElementById('peerConnectionStatus');
 
     function generateRoomCode() {
       const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -858,16 +931,54 @@
       return code;
     }
 
-    function getRoomDocRef(code) {
-      return doc(db, 'artifacts', appId, 'public', 'data', 'snakes_rooms', code);
+    function cleanupPeer() {
+      if (hostConnection) {
+        try { hostConnection.close(); } catch (_) {}
+        hostConnection = null;
+      }
+      guestConnections.forEach(conn => {
+        try { conn.close(); } catch (_) {}
+      });
+      guestConnections = [];
+      if (peerInstance) {
+        try { peerInstance.destroy(); } catch (_) {}
+        peerInstance = null;
+      }
     }
 
-    document.getElementById('createRoomBtn').addEventListener('click', async () => {
+    function renderLobbyPlayersUI() {
+      document.getElementById('lobbyPlayerCount').textContent = lobbyPlayers.length;
+      const listEl = document.getElementById('lobbyPlayersList');
+      listEl.innerHTML = lobbyPlayers.map((p, idx) => `
+        <div class="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-900 border border-slate-800">
+          <div class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center border-2 border-white shrink-0" style="background-color:${p.color};">
+            ${p.photo ? `<img src="${p.photo}" class="w-full h-full object-cover"/>` : `<span>${p.emoji}</span>`}
+          </div>
+          <div class="truncate">
+            <p class="font-bold text-sm text-white truncate">${p.name} ${idx === 0 ? '👑' : ''}</p>
+            <p class="text-[11px] text-slate-400">Player ${idx + 1}</p>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function broadcastFromHost(payload) {
+      guestConnections.forEach(conn => {
+        if (conn && conn.open) {
+          conn.send(payload);
+        }
+      });
+    }
+
+    // HOST: Create Room
+    document.getElementById('createRoomBtn').addEventListener('click', () => {
       onlineStatusMsg.textContent = '';
-      if (!db) {
-        onlineStatusMsg.textContent = 'Online server is initializing or unavailable. Use Local Pass & Play or refresh!';
+      if (typeof Peer === 'undefined') {
+        onlineStatusMsg.textContent = 'PeerJS library failed to load. Please refresh the page.';
         return;
       }
+
+      cleanupPeer();
       const nameVal = document.getElementById('onlineNameInput').value.trim() || 'Host';
       onlineProfile.name = nameVal;
 
@@ -875,7 +986,7 @@
       activeRoomCode = code;
       isRoomHost = true;
 
-      const initialPlayers = [{
+      lobbyPlayers = [{
         uid: currentUserId,
         name: onlineProfile.name,
         color: DEFAULT_COLORS[0],
@@ -884,145 +995,204 @@
         pos: 1
       }];
 
-      try {
-        await setDoc(getRoomDocRef(code), {
-          code,
-          hostUid: currentUserId,
-          status: 'waiting',
-          currentPlayerIndex: 0,
-          players: initialPlayers,
-          lastMove: null,
-          updatedAt: Date.now()
-        });
-        subscribeToRoom(code);
-      } catch (err) {
-        onlineStatusMsg.textContent = 'Could not create room. Please try again.';
-      }
-    });
-
-    document.getElementById('joinRoomBtn').addEventListener('click', async () => {
-      onlineStatusMsg.textContent = '';
-      if (!db) {
-        onlineStatusMsg.textContent = 'Online server unavailable. Please check your connection.';
-        return;
-      }
-      const code = document.getElementById('joinCodeInput').value.trim().toUpperCase();
-      if (code.length < 4) {
-        onlineStatusMsg.textContent = 'Please enter a valid 5-letter room code.';
-        return;
-      }
-      const nameVal = document.getElementById('onlineNameInput').value.trim() || 'Guest';
-      onlineProfile.name = nameVal;
-
-      try {
-        const snap = await getDoc(getRoomDocRef(code));
-        if (!snap.exists()) {
-          onlineStatusMsg.textContent = 'Room not found! Check the code and try again.';
-          return;
-        }
-        const data = snap.data();
-        if (data.status !== 'waiting') {
-          onlineStatusMsg.textContent = 'That match has already started!';
-          return;
-        }
-        if (data.players.length >= 4) {
-          onlineStatusMsg.textContent = 'Room is full (Max 4 players).';
-          return;
-        }
-
-        const existingIdx = data.players.findIndex(p => p.uid === currentUserId);
-        const updatedPlayers = [...data.players];
-        if (existingIdx === -1) {
-          const slot = updatedPlayers.length;
-          updatedPlayers.push({
-            uid: currentUserId,
-            name: onlineProfile.name,
-            color: DEFAULT_COLORS[slot % 4],
-            photo: onlineProfile.photo || null,
-            emoji: DEFAULT_EMOJIS[slot % 4],
-            pos: 1
-          });
-          await updateDoc(getRoomDocRef(code), { players: updatedPlayers, updatedAt: Date.now() });
-        }
-
-        activeRoomCode = code;
-        isRoomHost = (data.hostUid === currentUserId);
-        subscribeToRoom(code);
-      } catch (err) {
-        onlineStatusMsg.textContent = 'Error joining room. Please try again.';
-      }
-    });
-
-    function subscribeToRoom(code) {
-      if (roomUnsubscribe) roomUnsubscribe();
       onlineLobbyActions.classList.add('hidden');
       onlineWaitingRoom.classList.remove('hidden');
       document.getElementById('displayRoomCode').textContent = code;
+      document.getElementById('startOnlineMatchBtn').classList.remove('hidden');
+      document.getElementById('waitingHostNote').classList.add('hidden');
+      peerConnectionStatus.className = 'text-[11px] font-semibold text-amber-300 mt-1';
+      peerConnectionStatus.textContent = '● Connecting to PeerJS...';
+      renderLobbyPlayersUI();
 
-      roomUnsubscribe = onSnapshot(getRoomDocRef(code), async (snap) => {
-        if (!snap.exists()) return;
-        const room = snap.data();
+      peerInstance = new Peer(PEER_PREFIX + code);
 
-        // Update Waiting Room Lobby UI
-        if (room.status === 'waiting') {
-          document.getElementById('lobbyPlayerCount').textContent = room.players.length;
-          const listEl = document.getElementById('lobbyPlayersList');
-          listEl.innerHTML = room.players.map((p, idx) => `
-            <div class="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-900 border border-slate-800">
-              <div class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center border-2 border-white shrink-0" style="background-color:${p.color};">
-                ${p.photo ? `<img src="${p.photo}" class="w-full h-full object-cover"/>` : `<span>${p.emoji}</span>`}
-              </div>
-              <div class="truncate">
-                <p class="font-bold text-sm text-white truncate">${p.name} ${p.uid === room.hostUid ? '👑' : ''}</p>
-                <p class="text-[11px] text-slate-400">Player ${idx + 1}</p>
-              </div>
-            </div>
-          `).join('');
+      peerInstance.on('open', () => {
+        peerConnectionStatus.className = 'text-[11px] font-semibold text-emerald-400 mt-1';
+        peerConnectionStatus.textContent = '● Connected to PeerJS • Waiting for players...';
+      });
 
-          const startBtn = document.getElementById('startOnlineMatchBtn');
-          const waitNote = document.getElementById('waitingHostNote');
-          if (room.hostUid === currentUserId) {
-            startBtn.classList.remove('hidden');
-            waitNote.classList.add('hidden');
-          } else {
-            startBtn.classList.add('hidden');
-            waitNote.classList.remove('hidden');
+      peerInstance.on('connection', (conn) => {
+        conn.on('open', () => {
+          guestConnections.push(conn);
+        });
+
+        conn.on('data', async (msg) => {
+          if (!msg || !msg.type) return;
+
+          // Guest requests to join lobby
+          if (msg.type === 'JOIN_REQUEST') {
+            if (!setupScreen.classList.contains('hidden') === false) {
+              conn.send({ type: 'ROOM_ERROR', message: 'Match has already started!' });
+              return;
+            }
+            if (lobbyPlayers.length >= 4) {
+              conn.send({ type: 'ROOM_ERROR', message: 'Room is full (Max 4 players).' });
+              return;
+            }
+
+            const slot = lobbyPlayers.length;
+            const newPlayer = {
+              uid: msg.uid,
+              name: msg.name || `Player ${slot + 1}`,
+              color: DEFAULT_COLORS[slot % 4],
+              photo: msg.photo || null,
+              emoji: DEFAULT_EMOJIS[slot % 4],
+              pos: 1
+            };
+            lobbyPlayers.push(newPlayer);
+            renderLobbyPlayersUI();
+            broadcastFromHost({ type: 'LOBBY_UPDATE', players: lobbyPlayers });
           }
-        }
 
-        // Transition into Active Match
-        if (room.status === 'playing') {
-          if (setupScreen && !setupScreen.classList.contains('hidden')) {
-            setupScreen.classList.add('hidden');
-            gameScreen.classList.remove('hidden');
-            document.getElementById('onlineRoomPill').classList.remove('hidden');
-            document.getElementById('onlineRoomPill').classList.add('flex');
-            document.getElementById('inGameRoomCode').textContent = code;
+          // Guest rolls dice on their turn
+          if (msg.type === 'ROLL_REQUEST') {
+            if (isAnimating) return;
+            const activePl = players[currentPlayerIndex];
+            if (!activePl || activePl.uid !== msg.uid) return;
 
-            players = room.players.map((p, idx) => ({ ...p, id: idx }));
-            currentPlayerIndex = room.currentPlayerIndex || 0;
-            lastProcessedTurnKey = '';
-            buildBoardTiles();
-            renderBoardOverlay();
+            const rolled = Math.floor(Math.random() * 6) + 1;
+            const nextIdx = (rolled === 6) ? currentPlayerIndex : (currentPlayerIndex + 1) % players.length;
+            const moveId = `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+
+            broadcastFromHost({
+              type: 'MOVE_EXECUTED',
+              moveId,
+              playerIdx: currentPlayerIndex,
+              rolled,
+              nextPlayerIndex: nextIdx
+            });
+
+            await executeAnimatedMove(currentPlayerIndex, rolled, nextIdx);
+          }
+        });
+
+        conn.on('close', () => {
+          guestConnections = guestConnections.filter(c => c !== conn);
+        });
+      });
+
+      peerInstance.on('error', (err) => {
+        console.error('PeerJS Host Error:', err);
+        onlineStatusMsg.textContent = 'Connection issue: ' + (err.type || 'Unable to connect to PeerJS.');
+      });
+    });
+
+    // GUEST: Join Friend's Room
+    document.getElementById('joinRoomBtn').addEventListener('click', () => {
+      onlineStatusMsg.textContent = '';
+      if (typeof Peer === 'undefined') {
+        onlineStatusMsg.textContent = 'PeerJS library failed to load. Please refresh the page.';
+        return;
+      }
+
+      const code = document.getElementById('joinCodeInput').value.trim().toUpperCase();
+      if (code.length < 4) {
+        onlineStatusMsg.textContent = 'Please enter a valid 5-character room code.';
+        return;
+      }
+
+      cleanupPeer();
+      const nameVal = document.getElementById('onlineNameInput').value.trim() || 'Guest';
+      onlineProfile.name = nameVal;
+      activeRoomCode = code;
+      isRoomHost = false;
+
+      onlineStatusMsg.className = 'text-center text-xs text-cyan-300 font-semibold mt-3 min-h-[18px]';
+      onlineStatusMsg.textContent = 'Connecting to room ' + code + '...';
+
+      peerInstance = new Peer();
+
+      peerInstance.on('open', () => {
+        hostConnection = peerInstance.connect(PEER_PREFIX + code, { reliable: true });
+
+        hostConnection.on('open', () => {
+          onlineStatusMsg.textContent = '';
+          onlineStatusMsg.className = 'text-center text-xs text-rose-400 font-semibold mt-3 min-h-[18px]';
+          onlineLobbyActions.classList.add('hidden');
+          onlineWaitingRoom.classList.remove('hidden');
+          document.getElementById('displayRoomCode').textContent = code;
+          document.getElementById('startOnlineMatchBtn').classList.add('hidden');
+          document.getElementById('waitingHostNote').classList.remove('hidden');
+          peerConnectionStatus.className = 'text-[11px] font-semibold text-emerald-400 mt-1';
+          peerConnectionStatus.textContent = '● Connected to Host';
+
+          hostConnection.send({
+            type: 'JOIN_REQUEST',
+            uid: currentUserId,
+            name: onlineProfile.name,
+            photo: onlineProfile.photo || null
+          });
+        });
+
+        hostConnection.on('data', async (msg) => {
+          if (!msg || !msg.type) return;
+
+          if (msg.type === 'ROOM_ERROR') {
+            cleanupPeer();
+            onlineWaitingRoom.classList.add('hidden');
+            onlineLobbyActions.classList.remove('hidden');
+            onlineStatusMsg.textContent = msg.message;
+          }
+
+          if (msg.type === 'LOBBY_UPDATE') {
+            lobbyPlayers = msg.players;
+            renderLobbyPlayersUI();
+          }
+
+          if (msg.type === 'START_MATCH') {
+            startOnlineBoardFromState(msg.players, msg.currentPlayerIndex || 0);
+          }
+
+          if (msg.type === 'MOVE_EXECUTED') {
+            if (msg.moveId !== lastProcessedTurnKey) {
+              lastProcessedTurnKey = msg.moveId;
+              await executeAnimatedMove(msg.playerIdx, msg.rolled, msg.nextPlayerIndex);
+            }
+          }
+
+          if (msg.type === 'RESET_MATCH') {
+            stopConfetti();
+            victoryModal.classList.add('hidden');
+            players = msg.players.map((p, idx) => ({ ...p, id: idx, pos: 1 }));
+            currentPlayerIndex = 0;
+            isAnimating = false;
             renderTokens();
-            renderScoreboard();
             updateTurnUI();
             setDiceFace(1);
           }
+        });
 
-          // Animate incoming remote move if new
-          if (room.lastMove && room.lastMove.moveId !== lastProcessedTurnKey) {
-            lastProcessedTurnKey = room.lastMove.moveId;
-            await executeAnimatedMove(
-              room.lastMove.playerIdx,
-              room.lastMove.rolled,
-              room.lastMove.nextPlayerIndex
-            );
-          }
-        }
-      }, (error) => {
-        console.error("Room snapshot error:", error);
+        hostConnection.on('close', () => {
+          onlineStatusMsg.textContent = 'Disconnected from host room.';
+        });
       });
+
+      peerInstance.on('error', (err) => {
+        console.error('PeerJS Guest Error:', err);
+        onlineStatusMsg.className = 'text-center text-xs text-rose-400 font-semibold mt-3 min-h-[18px]';
+        onlineStatusMsg.textContent = 'Could not find room "' + code + '". Check the code and try again!';
+      });
+    });
+
+    function startOnlineBoardFromState(roomPlayers, startIdx) {
+      sfx.init();
+      setupScreen.classList.add('hidden');
+      gameScreen.classList.remove('hidden');
+      document.getElementById('onlineRoomPill').classList.remove('hidden');
+      document.getElementById('onlineRoomPill').classList.add('flex');
+      document.getElementById('inGameRoomCode').textContent = activeRoomCode;
+
+      players = roomPlayers.map((p, idx) => ({ ...p, id: idx, pos: 1 }));
+      currentPlayerIndex = startIdx;
+      isAnimating = false;
+      lastProcessedTurnKey = '';
+
+      buildBoardTiles();
+      renderBoardOverlay();
+      renderTokens();
+      renderScoreboard();
+      updateTurnUI();
+      setDiceFace(1);
     }
 
     document.getElementById('copyCodeBtn').addEventListener('click', () => {
@@ -1038,20 +1208,21 @@
     });
 
     document.getElementById('leaveRoomBtn').addEventListener('click', () => {
-      if (roomUnsubscribe) roomUnsubscribe();
+      cleanupPeer();
       activeRoomCode = null;
+      lobbyPlayers = [];
       onlineWaitingRoom.classList.add('hidden');
       onlineLobbyActions.classList.remove('hidden');
     });
 
-    document.getElementById('startOnlineMatchBtn').addEventListener('click', async () => {
-      if (!activeRoomCode || !db) return;
-      await updateDoc(getRoomDocRef(activeRoomCode), {
-        status: 'playing',
-        currentPlayerIndex: 0,
-        lastMove: null,
-        updatedAt: Date.now()
+    document.getElementById('startOnlineMatchBtn').addEventListener('click', () => {
+      if (!isRoomHost || !activeRoomCode) return;
+      broadcastFromHost({
+        type: 'START_MATCH',
+        players: lobbyPlayers,
+        currentPlayerIndex: 0
       });
+      startOnlineBoardFromState(lobbyPlayers, 0);
     });
 
     /**
@@ -1458,48 +1629,38 @@
       const activePlayer = players[currentPlayerIndex];
       if (gameMode === 'online' && activePlayer.uid !== currentUserId) return;
 
-      const rolled = Math.floor(Math.random() * 6) + 1;
-      const nextIdx = (rolled === 6) ? currentPlayerIndex : (currentPlayerIndex + 1) % players.length;
-
-      if (gameMode === 'online' && activeRoomCode && db) {
+      if (gameMode === 'online') {
         isAnimating = true;
         rollBtn.disabled = true;
-        const moveId = `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-        lastProcessedTurnKey = moveId;
 
-        // Calculate final destination to persist in Firestore
-        const finalPos = computeDestinationPos(activePlayer.pos, rolled);
-        const updatedPlayers = players.map((pl, idx) =>
-          idx === currentPlayerIndex ? { ...pl, pos: finalPos } : pl
-        );
+        if (isRoomHost) {
+          const rolled = Math.floor(Math.random() * 6) + 1;
+          const nextIdx = (rolled === 6) ? currentPlayerIndex : (currentPlayerIndex + 1) % players.length;
+          const moveId = `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+          lastProcessedTurnKey = moveId;
 
-        await updateDoc(getRoomDocRef(activeRoomCode), {
-          players: updatedPlayers,
-          currentPlayerIndex: nextIdx,
-          lastMove: {
+          broadcastFromHost({
+            type: 'MOVE_EXECUTED',
             moveId,
             playerIdx: currentPlayerIndex,
             rolled,
             nextPlayerIndex: nextIdx
-          },
-          updatedAt: Date.now()
-        });
+          });
 
-        await executeAnimatedMove(currentPlayerIndex, rolled, nextIdx);
+          await executeAnimatedMove(currentPlayerIndex, rolled, nextIdx);
+        } else if (hostConnection && hostConnection.open) {
+          statusTitle.textContent = 'Rolling...';
+          statusSubtitle.textContent = 'Syncing roll with host...';
+          hostConnection.send({
+            type: 'ROLL_REQUEST',
+            uid: currentUserId
+          });
+        }
       } else {
+        const rolled = Math.floor(Math.random() * 6) + 1;
+        const nextIdx = (rolled === 6) ? currentPlayerIndex : (currentPlayerIndex + 1) % players.length;
         await executeAnimatedMove(currentPlayerIndex, rolled, nextIdx);
       }
-    }
-
-    function computeDestinationPos(startPos, rolled) {
-      let pos = startPos + rolled;
-      if (pos > 100) {
-        pos = exactRollRequired ? 100 - (pos - 100) : 100;
-      }
-      if (JUMPS[pos]) {
-        pos = JUMPS[pos].to;
-      }
-      return pos;
     }
 
     async function executeAnimatedMove(playerIdx, rolled, nextPlayerIdx) {
@@ -1676,8 +1837,9 @@
 
     function exitToMainMenu() {
       stopConfetti();
-      if (roomUnsubscribe) roomUnsubscribe();
+      cleanupPeer();
       activeRoomCode = null;
+      lobbyPlayers = [];
       victoryModal.classList.add('hidden');
       gameScreen.classList.add('hidden');
       setupScreen.classList.remove('hidden');
@@ -1688,22 +1850,23 @@
     document.getElementById('backToSetupBtn').addEventListener('click', exitToMainMenu);
     document.getElementById('newPlayersBtn').addEventListener('click', exitToMainMenu);
 
-    document.getElementById('playAgainBtn').addEventListener('click', async () => {
+    document.getElementById('playAgainBtn').addEventListener('click', () => {
       stopConfetti();
       victoryModal.classList.add('hidden');
-      if (gameMode === 'online' && activeRoomCode && db) {
-        const resetPlayers = players.map(p => ({ ...p, pos: 1 }));
-        await updateDoc(getRoomDocRef(activeRoomCode), {
-          players: resetPlayers,
-          currentPlayerIndex: 0,
-          lastMove: null,
-          updatedAt: Date.now()
-        });
-        players = resetPlayers;
-        currentPlayerIndex = 0;
-        isAnimating = false;
-        renderTokens();
-        updateTurnUI();
+      if (gameMode === 'online' && activeRoomCode) {
+        if (isRoomHost) {
+          const resetPlayers = players.map(p => ({ ...p, pos: 1 }));
+          broadcastFromHost({
+            type: 'RESET_MATCH',
+            players: resetPlayers
+          });
+          players = resetPlayers;
+          currentPlayerIndex = 0;
+          isAnimating = false;
+          renderTokens();
+          updateTurnUI();
+          setDiceFace(1);
+        }
       } else {
         initLocalGame();
       }
