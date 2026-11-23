@@ -1,820 +1,1284 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Snakes & Ladders - The Classic Game</title>
-<style>
-:root {
-  --ink:#26334a;
-  --cream:#fffaf0;
-  --panel:#ffffff;
-  --accent:#ff9f43;
-  --shadow:0 12px 30px rgba(38,51,74,.12);
-}
-*{box-sizing:border-box}
-body{
-  margin:0;
-  font-family:system-ui,-apple-system,Segoe UI,sans-serif;
-  color:var(--ink);
-  background:
-    radial-gradient(circle at 10% 10%,#fff0c9 0,transparent 28%),
-    radial-gradient(circle at 90% 90%,#d9f4ed 0,transparent 30%),
-    #f5f3ec;
-  min-height:100vh;
-}
-button,input,select{font:inherit}
-button{cursor:pointer}
-header{
-  text-align:center;
-  padding:24px 15px 12px;
-}
-header h1{
-  margin:0;
-  font-size:clamp(1.8rem,4vw,3rem);
-  letter-spacing:-1.5px;
-  font-weight:900;
-}
-header h1 span{color:#f28b35}
-header p{margin:7px 0 0;color:#738096}
-.app{
-  width:min(1450px,96%);
-  margin:15px auto 35px;
-  display:grid;
-  grid-template-columns:minmax(0,1fr) 320px;
-  gap:20px;
-  align-items:start;
-}
-.board-card,.side-card{
-  background:rgba(255,255,255,.9);
-  border:1px solid rgba(255,255,255,.9);
-  border-radius:24px;
-  box-shadow:var(--shadow);
-}
-.board-card{padding:16px}
-.board-top{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:10px;
-  margin:0 2px 13px;
-}
-.board-top h2{margin:0;font-size:1.1rem}
-.pill{
-  background:#edf5ef;
-  color:#397a58;
-  padding:7px 12px;
-  border-radius:30px;
-  font-size:.78rem;
-  font-weight:800;
-}
-.board-wrap{
-  position:relative;
-  width:100%;
-  aspect-ratio:1;
-  border:7px solid #fff;
-  border-radius:13px;
-  overflow:hidden;
-  background:#e9f1dc;
-  box-shadow:0 5px 15px #26334a20;
-}
-.board{
-  position:absolute;
-  inset:0;
-  display:grid;
-  grid-template-columns:repeat(10,1fr);
-  grid-template-rows:repeat(10,1fr);
-}
-.tile{
-  position:relative;
-  display:flex;
-  align-items:flex-start;
-  justify-content:flex-start;
-  padding:3px 4px;
-  font-size:clamp(8px,1.25vw,14px);
-  font-weight:900;
-  color:#53634f;
-  border:1px solid rgba(74,95,68,.12);
-}
-.tile:nth-child(odd){background:#e4f0cf}
-.tile:nth-child(even){background:#f8edc8}
-.tile.special-start{background:#bdebd3}
-.tile.special-finish{background:#ffe09b}
-.tile-number{position:relative;z-index:1}
-.overlay,.tokens{
-  position:absolute;
-  inset:0;
-  width:100%;
-  height:100%;
-}
-.overlay{z-index:2;pointer-events:none}
-.tokens{z-index:3;pointer-events:none}
-.snake-line{
-  fill:none;
-  stroke:#d84d45;
-  stroke-width:17;
-  stroke-linecap:round;
-  stroke-linejoin:round;
-  filter:drop-shadow(2px 3px 2px #0003);
-}
-.snake-belly{
-  fill:none;
-  stroke:#ffb4a4;
-  stroke-width:4;
-  stroke-dasharray:5 13;
-  stroke-linecap:round;
-}
-.snake-head{fill:#d84d45;stroke:#8e302e;stroke-width:3}
-.snake-eye{fill:white}
-.snake-pupil{fill:#26334a}
-.ladder-rail{
-  fill:none;
-  stroke:#9a622e;
-  stroke-width:13;
-  stroke-linecap:round;
-  filter:drop-shadow(2px 3px 2px #0003);
-}
-.ladder-rung{
-  stroke:#e6b46b;
-  stroke-width:8;
-  stroke-linecap:round;
-}
-.token{
-  position:absolute;
-  width:7.2%;
-  height:7.2%;
-  min-width:20px;
-  min-height:20px;
-  border-radius:50%;
-  border:3px solid white;
-  box-shadow:0 3px 7px #17203355;
-  transform:translate(-50%,-50%);
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  overflow:hidden;
-  transition:left .22s linear,top .22s linear;
-  background:var(--token-color);
-}
-.token img{width:100%;height:100%;object-fit:cover}
-.token .initial{
-  color:white;
-  font-size:clamp(10px,1.4vw,17px);
-  font-weight:900;
-  text-shadow:0 1px 2px #0005;
-}
-.token.active-token{
-  outline:3px solid #ffd34e;
-  outline-offset:2px;
-  z-index:5;
-}
-.start-label{
-  position:absolute;
-  bottom:4px;
-  right:4px;
-  z-index:1;
-  font-size:8px;
-  font-weight:900;
-  color:#3b785a;
-}
-.sidebar{display:grid;gap:15px}
-.side-card{padding:17px}
-.side-card h3{margin:0 0 13px;font-size:1rem}
-.setup-row{display:flex;gap:8px;align-items:center;margin-bottom:10px}
-.setup-row label{font-size:.85rem;font-weight:750;flex:1}
-select,input[type=text]{
-  border:1px solid #dce2e8;
-  background:#fff;
-  border-radius:10px;
-  padding:9px 10px;
-  color:var(--ink);
-  min-width:0;
-}
-select{max-width:120px}
-.player-list{display:grid;gap:10px}
-.player{
-  display:grid;
-  grid-template-columns:42px minmax(0,1fr);
-  gap:10px;
-  align-items:center;
-  padding:10px;
-  border:2px solid #edf0f3;
-  border-radius:14px;
-  transition:.2s;
-}
-.player.current{
-  border-color:#ffb14f;
-  background:#fff8e9;
-  box-shadow:0 3px 12px #ffb14f25;
-}
-.avatar{
-  width:42px;height:42px;
-  border-radius:50%;
-  border:3px solid white;
-  box-shadow:0 1px 5px #0002;
-  display:grid;place-items:center;
-  color:white;font-weight:900;
-  overflow:hidden;
-  background:var(--player-color);
-  font-size:1rem;
-}
-.avatar img{width:100%;height:100%;object-fit:cover}
-.player-info{min-width:0}
-.player-name{
-  width:100%;
-  padding:5px 7px!important;
-  font-weight:800;
-}
-.player-meta{font-size:.73rem;color:#788397;margin-top:4px}
-.photo-label{
-  display:inline-block;
-  margin-top:5px;
-  font-size:.72rem;
-  font-weight:750;
-  color:#4c6b91;
-  cursor:pointer;
-}
-.photo-label input{display:none}
-.turn-box{
-  text-align:center;
-  background:#f4f7fb;
-  border-radius:16px;
-  padding:14px;
-}
-.turn-caption{
-  color:#7a879a;
-  font-size:.75rem;
-  text-transform:uppercase;
-  font-weight:850;
-  letter-spacing:1px;
-}
-.turn-name{font-size:1.2rem;font-weight:900;margin-top:4px}
-.dice-area{display:grid;place-items:center;padding:15px 0 10px}
-.dice-scene{width:88px;height:88px;perspective:500px}
-.dice{
-  width:88px;height:88px;
-  position:relative;
-  transform-style:preserve-3d;
-  transform:translateZ(-44px) rotateX(-18deg) rotateY(-25deg);
-}
-.dice.rolling{animation:tumble .65s ease-in-out infinite}
-@keyframes tumble{
-  0%{transform:translateZ(-44px) rotateX(0deg) rotateY(0deg) rotateZ(0deg)}
-  25%{transform:translateZ(-44px) rotateX(100deg) rotateY(110deg) rotateZ(70deg)}
-  50%{transform:translateZ(-44px) rotateX(220deg) rotateY(200deg) rotateZ(150deg)}
-  75%{transform:translateZ(-44px) rotateX(310deg) rotateY(300deg) rotateZ(250deg)}
-  100%{transform:translateZ(-44px) rotateX(360deg) rotateY(360deg) rotateZ(360deg)}
-}
-.face{
-  position:absolute;
-  width:88px;height:88px;
-  border-radius:15px;
-  background:linear-gradient(145deg,#fff,#e8edf4);
-  border:2px solid #d9e0e9;
-  box-shadow:inset 0 2px 5px #fff;
-  display:grid;
-  grid-template:repeat(3,1fr)/repeat(3,1fr);
-  padding:12px;
-  backface-visibility:hidden;
-}
-.face.front{transform:rotateY(0deg) translateZ(44px)}
-.face.back{transform:rotateY(180deg) translateZ(44px)}
-.face.right{transform:rotateY(90deg) translateZ(44px)}
-.face.left{transform:rotateY(-90deg) translateZ(44px)}
-.face.top{transform:rotateX(90deg) translateZ(44px)}
-.face.bottom{transform:rotateX(-90deg) translateZ(44px)}
-.dot{
-  width:13px;height:13px;
-  border-radius:50%;
-  background:#29374d;
-  align-self:center;justify-self:center;
-}
-.d1{grid-area:1/1}.d2{grid-area:1/3}.d3{grid-area:2/2}
-.d4{grid-area:3/1}.d5{grid-area:3/3}.d6{grid-area:2/1}
-.d7{grid-area:2/3}
-.dice-result{font-size:.8rem;color:#778397;margin-top:7px;min-height:20px}
-.roll-btn,.reset-btn{
-  width:100%;border:0;border-radius:13px;
-  padding:13px;font-weight:900;
-  transition:transform .15s,filter .15s;
-}
-.roll-btn{background:linear-gradient(135deg,#ffb64f,#f28b35);color:#422c16;box-shadow:0 5px 0 #d77b29}
-.roll-btn:hover:not(:disabled){filter:brightness(1.05);transform:translateY(-2px)}
-.roll-btn:active:not(:disabled){transform:translateY(2px);box-shadow:0 2px 0 #d77b29}
-.roll-btn:disabled{opacity:.5;cursor:not-allowed}
-.reset-btn{margin-top:9px;background:#edf1f6;color:#53647b}
-.status{
-  min-height:42px;
-  font-size:.83rem;
-  line-height:1.4;
-  color:#65748a;
-  margin-top:10px;
-  text-align:center;
-}
-.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:.75rem;color:#65748a}
-.legend span{display:flex;align-items:center;gap:5px}
-.legend i{width:12px;height:12px;border-radius:4px;display:inline-block}
-.rules{font-size:.78rem;line-height:1.55;color:#758195;margin:0;padding-left:18px}
-.win-banner{
-  display:none;
-  position:fixed;inset:0;
-  z-index:20;
-  background:#18243acc;
-  align-items:center;justify-content:center;
-  padding:20px;
-}
-.win-banner.show{display:flex}
-.win-content{
-  background:white;
-  border-radius:25px;
-  padding:30px;
-  text-align:center;
-  width:min(380px,100%);
-  box-shadow:0 20px 60px #0005;
-  animation:pop .35s ease-out;
-}
-@keyframes pop{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
-.win-content .trophy{font-size:4rem}
-.win-content h2{font-size:2rem;margin:8px 0}
-.win-content p{color:#758195}
-.win-content button{
-  border:0;border-radius:12px;padding:12px 22px;
-  background:#ffab48;font-weight:900;color:#422c16;
-}
-@media(max-width:900px){
-  .app{grid-template-columns:1fr;width:min(700px,96%)}
-  .sidebar{grid-template-columns:1fr 1fr}
-  .sidebar .players-card{grid-row:span 2}
-}
-@media(max-width:520px){
-  header{padding-top:17px}
-  .app{width:96%;gap:12px;margin-top:8px}
-  .board-card{padding:8px;border-radius:16px}
-  .board-wrap{border-width:4px}
-  .tile{padding:1px 2px}
-  .sidebar{grid-template-columns:1fr}
-  .sidebar .players-card{grid-row:auto}
-  .side-card{padding:14px}
-}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Snakes, Ladders & Escalators</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --dice-size: 68px;
+      --dice-half: 34px;
+    }
+
+    @media (min-width: 640px) {
+      :root {
+        --dice-size: 76px;
+        --dice-half: 38px;
+      }
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: radial-gradient(circle at top left, #fef3c7 0%, #e0f2fe 45%, #ede9fe 100%);
+      min-height: 100vh;
+      overflow-x: hidden;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    h1, h2, h3, .font-display {
+      font-family: 'Fredoka', cursive, sans-serif;
+    }
+
+    /* 3D Realistic White Dice Styling */
+    .dice-scene {
+      width: var(--dice-size);
+      height: var(--dice-size);
+      perspective: 600px;
+      margin: 0 auto;
+    }
+
+    .dice-cube {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.95s cubic-bezier(0.22, 1.15, 0.36, 1);
+    }
+
+    .dice-cube.rolling {
+      animation: diceTumble 0.75s linear infinite;
+    }
+
+    @keyframes diceTumble {
+      0%   { transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg); }
+      25%  { transform: rotateX(190deg) rotateY(95deg) rotateZ(45deg); }
+      50%  { transform: rotateX(360deg) rotateY(220deg) rotateZ(135deg); }
+      75%  { transform: rotateX(540deg) rotateY(310deg) rotateZ(240deg); }
+      100% { transform: rotateX(720deg) rotateY(360deg) rotateZ(360deg); }
+    }
+
+    .dice-face {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(145deg, #ffffff 0%, #f1f5f9 75%, #e2e8f0 100%);
+      border-radius: 14px;
+      border: 2px solid #cbd5e1;
+      box-shadow:
+        inset 0 3px 6px rgba(255, 255, 255, 0.95),
+        inset 0 -4px 8px rgba(15, 23, 42, 0.14),
+        0 4px 10px rgba(15, 23, 42, 0.15);
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      padding: 10px;
+      gap: 3px;
+      backface-visibility: hidden;
+    }
+
+    .pip {
+      width: 100%;
+      height: 100%;
+      border-radius: 9999px;
+      background: radial-gradient(circle at 35% 35%, #334155, #0f172a 75%);
+      box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.7), 0 1px 1px rgba(255, 255, 255, 0.8);
+      transform: scale(0.84);
+    }
+
+    .pip.red {
+      background: radial-gradient(circle at 35% 35%, #ef4444, #b91c1c 75%);
+      transform: scale(1.02);
+    }
+
+    /* Face transforms */
+    .face-1 { transform: rotateY(0deg) translateZ(var(--dice-half)); }
+    .face-2 { transform: rotateY(90deg) translateZ(var(--dice-half)); }
+    .face-3 { transform: rotateX(90deg) translateZ(var(--dice-half)); }
+    .face-4 { transform: rotateX(-90deg) translateZ(var(--dice-half)); }
+    .face-5 { transform: rotateY(-90deg) translateZ(var(--dice-half)); }
+    .face-6 { transform: rotateY(180deg) translateZ(var(--dice-half)); }
+
+    /* Board Tile Aesthetics */
+    .board-wrapper {
+      aspect-ratio: 1 / 1;
+      width: 100%;
+      max-width: 650px;
+      position: relative;
+      border-radius: 20px;
+      box-shadow:
+        0 20px 40px -12px rgba(15, 23, 42, 0.25),
+        0 0 0 6px #ffffff,
+        0 0 0 10px #fbbf24;
+      background: #ffffff;
+      overflow: hidden;
+    }
+
+    .board-grid {
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      grid-template-rows: repeat(10, 1fr);
+      width: 100%;
+      height: 100%;
+    }
+
+    .tile {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 2px 4px;
+      border: 0.5px solid rgba(255, 255, 255, 0.7);
+      font-weight: 700;
+      transition: filter 0.2s ease;
+    }
+
+    .tile-num {
+      font-family: 'Fredoka', sans-serif;
+      font-size: clamp(0.62rem, 1.8vw, 0.92rem);
+      line-height: 1;
+      color: rgba(15, 23, 42, 0.78);
+      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
+      z-index: 2;
+    }
+
+    /* Escalator Step Animation */
+    @keyframes escalatorDash {
+      to {
+        stroke-dashoffset: -24;
+      }
+    }
+
+    .escalator-steps {
+      animation: escalatorDash 1.1s linear infinite;
+    }
+
+    /* Player Avatar Token */
+    .player-token {
+      position: absolute;
+      width: 7.4%;
+      height: 7.4%;
+      border-radius: 9999px;
+      transform: translate(-50%, -50%);
+      transition: left 0.24s cubic-bezier(0.34, 1.56, 0.64, 1), top 0.24s cubic-bezier(0.34, 1.56, 0.64, 1);
+      z-index: 30;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35), 0 0 0 2.5px #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .player-token.sliding {
+      transition: left 0.75s cubic-bezier(0.25, 1, 0.5, 1), top 0.75s cubic-bezier(0.25, 1, 0.5, 1);
+      z-index: 40;
+    }
+
+    .player-token.active-turn {
+      z-index: 35;
+      animation: tokenPulse 1.4s ease-in-out infinite;
+    }
+
+    @keyframes tokenPulse {
+      0%, 100% { box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35), 0 0 0 3px #ffffff, 0 0 0 6px rgba(250, 204, 21, 0.85); }
+      50%      { box-shadow: 0 6px 14px rgba(0, 0, 0, 0.45), 0 0 0 3px #ffffff, 0 0 0 10px rgba(250, 204, 21, 0.25); }
+    }
+
+    .player-token img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* Confetti Canvas */
+    #confettiCanvas {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 60;
+    }
+  </style>
 </head>
-<body>
+<body class="text-slate-800 antialiased">
 
-<header>
-  <h1>🐍 Snakes <span>&</span> Ladders 🪜</h1>
-  <p>The classic race to 100. Roll the dice and climb your way to victory!</p>
-</header>
+  <!-- Confetti Overlay for Victory -->
+  <canvas id="confettiCanvas"></canvas>
 
-<main class="app">
-  <section class="board-card">
-    <div class="board-top">
-      <h2>Game Board</h2>
-      <span class="pill">100 TILES · CLASSIC MODE</span>
-    </div>
-    <div class="board-wrap">
-      <div class="board" id="board"></div>
-      <svg class="overlay" id="overlay" viewBox="0 0 1000 1000" preserveAspectRatio="none"></svg>
-      <div class="tokens" id="tokens"></div>
-    </div>
-    <div class="legend" style="margin:13px 4px 2px">
-      <span><i style="background:#d84d45"></i> Snakes: slide down</span>
-      <span><i style="background:#b78345"></i> Ladders: climb up</span>
-      <span><i style="background:#ffcf54"></i> Current player</span>
-    </div>
-  </section>
-
-  <aside class="sidebar">
-    <section class="side-card players-card">
-      <h3>👥 Players</h3>
-      <div class="setup-row">
-        <label for="playerCount">Number of players</label>
-        <select id="playerCount">
-          <option value="2">2 Players</option>
-          <option value="3">3 Players</option>
-          <option value="4">4 Players</option>
-        </select>
+  <!-- ==================== SETUP SCREEN ==================== -->
+  <div id="setupScreen" class="min-h-screen flex items-center justify-center p-4 sm:p-6">
+    <div class="w-full max-w-2xl bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl border-4 border-amber-300 p-6 sm:p-8">
+      <div class="text-center mb-6">
+        <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-100 text-amber-800 font-semibold text-xs sm:text-sm mb-2">
+          <span>🐍 Cartoon Snakes</span>
+          <span>•</span>
+          <span>🪜 Wooden Ladders</span>
+          <span>•</span>
+          <span>🛗 Mega Escalators</span>
+        </div>
+        <h1 class="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight">
+          Snakes &amp; Ladders Deluxe
+        </h1>
+        <p class="text-slate-500 text-sm sm:text-base mt-1">
+          Customize 2 to 4 players and upload your own photos from your gallery!
+        </p>
       </div>
-      <div class="player-list" id="playerList"></div>
-    </section>
 
-    <section class="side-card">
-      <h3>🎲 Your Turn</h3>
-      <div class="turn-box">
-        <div class="turn-caption">Playing now</div>
-        <div class="turn-name" id="turnName">Player 1</div>
-        <div class="dice-area">
+      <!-- Player Count Selector -->
+      <div class="mb-6">
+        <label class="block text-sm font-bold text-slate-700 mb-2 text-center">How many players?</label>
+        <div class="grid grid-cols-3 gap-3 max-w-sm mx-auto" id="playerCountButtons">
+          <button type="button" data-count="2" class="count-btn py-2.5 rounded-2xl font-display font-bold text-lg border-2 border-indigo-600 bg-indigo-600 text-white shadow-md transition">
+            2 Players
+          </button>
+          <button type="button" data-count="3" class="count-btn py-2.5 rounded-2xl font-display font-bold text-lg border-2 border-slate-200 bg-slate-50 text-slate-700 hover:border-indigo-300 transition">
+            3 Players
+          </button>
+          <button type="button" data-count="4" class="count-btn py-2.5 rounded-2xl font-display font-bold text-lg border-2 border-slate-200 bg-slate-50 text-slate-700 hover:border-indigo-300 transition">
+            4 Players
+          </button>
+        </div>
+      </div>
+
+      <!-- Player Customization Cards -->
+      <div id="playerSetupList" class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+        <!-- Populated dynamically by JS -->
+      </div>
+
+      <!-- Game Rule Toggle -->
+      <div class="flex items-center justify-between bg-slate-50 rounded-2xl p-3.5 mb-6 border border-slate-200">
+        <div>
+          <p class="text-sm font-bold text-slate-800">Exact Roll to Finish (Tile 100)</p>
+          <p class="text-xs text-slate-500">Bounce back extra steps if you roll over 100</p>
+        </div>
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" id="exactRollToggle" class="sr-only peer" checked>
+          <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+        </label>
+      </div>
+
+      <button id="startGameBtn" type="button" class="w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-600 hover:from-emerald-600 hover:to-cyan-700 text-white font-display font-bold text-xl shadow-lg shadow-emerald-500/30 active:scale-[0.99] transition cursor-pointer">
+        🎮 Start Game!
+      </button>
+    </div>
+  </div>
+
+  <!-- ==================== GAME SCREEN ==================== -->
+  <div id="gameScreen" class="hidden min-h-screen flex flex-col lg:flex-row items-center justify-center gap-4 lg:gap-8 p-3 sm:p-6 max-w-6xl mx-auto">
+
+    <!-- Left / Top: Board Area -->
+    <div class="w-full max-w-[650px] flex flex-col items-center">
+      <!-- Top Mobile Bar -->
+      <div class="w-full flex items-center justify-between mb-2.5 px-1">
+        <button id="backToSetupBtn" type="button" class="px-3 py-1.5 rounded-xl bg-white/90 hover:bg-white text-slate-700 font-semibold text-xs sm:text-sm shadow border border-slate-200 transition">
+          ← Change Players
+        </button>
+        <div class="flex items-center gap-2">
+          <span class="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold bg-white/80 px-3 py-1.5 rounded-xl border border-slate-200 text-slate-600">
+            <span>🪜 Ladder</span>
+            <span>•</span>
+            <span>🛗 Escalator</span>
+            <span>•</span>
+            <span>🐍 Snake</span>
+          </span>
+          <button id="muteBtn" type="button" class="p-2 rounded-xl bg-white/90 hover:bg-white text-slate-700 shadow border border-slate-200 transition" title="Toggle Sound">
+            🔊
+          </button>
+        </div>
+      </div>
+
+      <!-- The 10x10 Board -->
+      <div class="board-wrapper" id="boardWrapper">
+        <!-- 100 Colorful Grid Tiles -->
+        <div id="boardGrid" class="board-grid"></div>
+
+        <!-- Custom SVG Layer for Snakes, Wooden Ladders & Escalators -->
+        <svg id="boardOverlay" viewBox="0 0 1000 1000" class="absolute inset-0 w-full h-full pointer-events-none z-20"></svg>
+
+        <!-- Player Tokens Layer -->
+        <div id="tokensLayer" class="absolute inset-0 pointer-events-none z-30"></div>
+      </div>
+    </div>
+
+    <!-- Right / Bottom: Controls, Dice & Scoreboard -->
+    <div class="w-full max-w-[650px] lg:w-96 flex flex-col gap-3 sm:gap-4">
+
+      <!-- Status Banner -->
+      <div id="statusBanner" class="bg-white/95 backdrop-blur rounded-2xl p-3.5 sm:p-4 shadow-lg border-2 border-indigo-200 text-center">
+        <p id="statusTitle" class="font-display font-bold text-lg sm:text-xl text-slate-900">Player 1's Turn!</p>
+        <p id="statusSubtitle" class="text-xs sm:text-sm text-slate-500 mt-0.5">Tap the dice or button below to roll</p>
+      </div>
+
+      <!-- 3D Dice & Roll Action Card -->
+      <div class="bg-white/95 backdrop-blur rounded-3xl p-4 sm:p-6 shadow-xl border-2 border-amber-200 flex flex-row lg:flex-col items-center justify-around lg:justify-center gap-4">
+        <div id="diceClickArea" class="cursor-pointer p-2 rounded-2xl hover:bg-slate-50 transition" title="Click to roll dice">
           <div class="dice-scene">
-            <div class="dice" id="dice">
-              <div class="face front"><i class="dot d3"></i></div>
-              <div class="face back"><i class="dot d1"></i><i class="dot d2"></i><i class="dot d3"></i><i class="dot d4"></i><i class="dot d5"></i><i class="dot d6"></i></div>
-              <div class="face right"><i class="dot d1"></i><i class="dot d2"></i><i class="dot d3"></i><i class="dot d4"></i><i class="dot d5"></i></div>
-              <div class="face left"><i class="dot d1"></i><i class="dot d2"></i></div>
-              <div class="face top"><i class="dot d1"></i></div>
-              <div class="face bottom"><i class="dot d1"></i><i class="dot d2"></i><i class="dot d4"></i><i class="dot d5"></i></div>
+            <div id="diceCube" class="dice-cube">
+              <!-- Face 1 -->
+              <div class="dice-face face-1">
+                <div></div><div></div><div></div>
+                <div></div><div class="pip red"></div><div></div>
+                <div></div><div></div><div></div>
+              </div>
+              <!-- Face 2 -->
+              <div class="dice-face face-2">
+                <div class="pip"></div><div></div><div></div>
+                <div></div><div></div><div></div>
+                <div></div><div></div><div class="pip"></div>
+              </div>
+              <!-- Face 3 -->
+              <div class="dice-face face-3">
+                <div class="pip"></div><div></div><div></div>
+                <div></div><div class="pip"></div><div></div>
+                <div></div><div></div><div class="pip"></div>
+              </div>
+              <!-- Face 4 -->
+              <div class="dice-face face-4">
+                <div class="pip"></div><div></div><div class="pip"></div>
+                <div></div><div></div><div></div>
+                <div class="pip"></div><div></div><div class="pip"></div>
+              </div>
+              <!-- Face 5 -->
+              <div class="dice-face face-5">
+                <div class="pip"></div><div></div><div class="pip"></div>
+                <div></div><div class="pip"></div><div></div>
+                <div class="pip"></div><div></div><div class="pip"></div>
+              </div>
+              <!-- Face 6 -->
+              <div class="dice-face face-6">
+                <div class="pip"></div><div></div><div class="pip"></div>
+                <div class="pip"></div><div></div><div class="pip"></div>
+                <div class="pip"></div><div></div><div class="pip"></div>
+              </div>
             </div>
           </div>
-          <div class="dice-result" id="diceResult">Ready to roll!</div>
         </div>
-        <button class="roll-btn" id="rollBtn">ROLL THE DICE</button>
-        <button class="reset-btn" id="resetBtn">↻ Restart Game</button>
-        <div class="status" id="status">Player 1, roll the dice to begin.</div>
+
+        <div class="flex flex-col items-center w-full max-w-[210px]">
+          <button id="rollBtn" type="button" class="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-display font-bold text-lg sm:text-xl shadow-lg shadow-indigo-500/30 active:scale-95 transition cursor-pointer">
+            🎲 Roll Dice
+          </button>
+          <span id="lastRollBadge" class="mt-2 text-xs font-semibold text-slate-400">
+            Ready to roll
+          </span>
+        </div>
       </div>
-    </section>
 
-    <section class="side-card">
-      <h3>📜 How to Play</h3>
-      <ol class="rules">
-        <li>Take turns rolling the dice.</li>
-        <li>Move forward by the number rolled.</li>
-        <li>Land on a ladder to climb up.</li>
-        <li>Land on a snake to slide down.</li>
-        <li>You need the exact number to reach tile 100.</li>
-        <li>First player to reach 100 wins!</li>
-      </ol>
-    </section>
-  </aside>
-</main>
+      <!-- Player Roster / Live Standings -->
+      <div class="bg-white/95 backdrop-blur rounded-3xl p-4 shadow-lg border border-slate-200">
+        <h3 class="font-display font-bold text-sm uppercase tracking-wider text-slate-400 mb-2.5 px-1">
+          Players &amp; Positions
+        </h3>
+        <div id="scoreboardList" class="grid grid-cols-2 lg:grid-cols-1 gap-2">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
 
-<div class="win-banner" id="winBanner">
-  <div class="win-content">
-    <div class="trophy">🏆</div>
-    <h2 id="winnerTitle">We have a winner!</h2>
-    <p>Congratulations! You reached tile 100 and won the game.</p>
-    <button id="playAgain">Play Again</button>
+    </div>
   </div>
-</div>
 
-<script>
-const COLORS = ["#ef6461","#4285d4","#36a879","#a16ad1"];
-const SNAKES = [
-  {from:99,to:54,curve:-100},
-  {from:95,to:72,curve:65},
-  {from:87,to:36,curve:-80},
-  {from:62,to:19,curve:65},
-  {from:56,to:8,curve:-70},
-  {from:48,to:26,curve:55},
-  {from:16,to:6,curve:-35}
-];
-const LADDERS = [
-  {from:2,to:23},
-  {from:4,to:14},
-  {from:9,to:31},
-  {from:21,to:42},
-  {from:28,to:84},
-  {from:36,to:44},
-  {from:51,to:67},
-  {from:71,to:91},
-  {from:80,to:100}
-];
+  <!-- ==================== VICTORY MODAL ==================== -->
+  <div id="victoryModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 text-center shadow-2xl border-4 border-amber-400 transform transition-all">
+      <div class="text-5xl mb-3">🏆👑🎉</div>
+      <div id="winnerAvatarBox" class="w-24 h-24 rounded-full mx-auto mb-4 border-4 border-amber-400 shadow-lg overflow-hidden flex items-center justify-center bg-amber-100"></div>
+      <h2 id="winnerNameText" class="font-display font-bold text-3xl text-slate-900">Player 1 Wins!</h2>
+      <p class="text-slate-500 text-sm sm:text-base mt-1 mb-6">
+        Reached Tile 100 and conquered the snakes &amp; escalators!
+      </p>
+      <div class="flex flex-col sm:flex-row gap-3">
+        <button id="playAgainBtn" type="button" class="flex-1 py-3.5 px-5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-display font-bold text-lg shadow-md transition cursor-pointer">
+          🔄 Play Again
+        </button>
+        <button id="newPlayersBtn" type="button" class="flex-1 py-3.5 px-5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-display font-bold text-lg transition cursor-pointer">
+          👥 Change Players
+        </button>
+      </div>
+    </div>
+  </div>
 
-let players = [];
-let current = 0;
-let busy = false;
-let gameOver = false;
-let lastRoll = 1;
+  <script>
+    /**
+     * =========================================================================
+     * 1. SOUND ENGINE (Web Audio API - No external audio files needed)
+     * =========================================================================
+     */
+    class SoundFX {
+      constructor() {
+        this.ctx = null;
+        this.muted = false;
+      }
 
-const $ = id => document.getElementById(id);
-const wait = ms => new Promise(resolve => setTimeout(resolve,ms));
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (AudioContext) this.ctx = new AudioContext();
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
 
-function coordinates(square){
-  const rowFromBottom = Math.floor((square-1)/10);
-  const positionInRow = (square-1)%10;
-  const col = rowFromBottom%2===0 ? positionInRow : 9-positionInRow;
-  const row = 9-rowFromBottom;
-  return {x:col*100+50,y:row*100+50};
-}
+      playTone(freq, type, duration, delay = 0, gainVal = 0.15, slideTo = null) {
+        if (this.muted) return;
+        this.init();
+        if (!this.ctx) return;
 
-function buildBoard(){
-  const board = $("board");
-  board.innerHTML="";
-  for(let visual=0;visual<100;visual++){
-    const row = Math.floor(visual/10);
-    const col = visual%10;
-    const rowFromBottom = 9-row;
-    const square = rowFromBottom%2===0
-      ? rowFromBottom*10+col+1
-      : rowFromBottom*10+(10-col);
-    const tile = document.createElement("div");
-    tile.className="tile";
-    if(square===1)tile.classList.add("special-start");
-    if(square===100)tile.classList.add("special-finish");
-    tile.innerHTML=`<span class="tile-number">${square}</span>`;
-    if(square===1)tile.innerHTML+=`<span class="start-label">START</span>`;
-    if(square===100)tile.innerHTML+=`<span class="start-label" style="color:#9b6a13">FINISH</span>`;
-    board.appendChild(tile);
-  }
-}
+        const now = this.ctx.currentTime + delay;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
 
-function svgEl(name,attrs,parent){
-  const el=document.createElementNS("http://www.w3.org/2000/svg",name);
-  Object.entries(attrs).forEach(([k,v])=>el.setAttribute(k,v));
-  parent.appendChild(el);
-  return el;
-}
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, now);
+        if (slideTo) {
+          osc.frequency.exponentialRampToValueAtTime(slideTo, now + duration);
+        }
 
-function drawConnections(){
-  const svg=$("overlay");
-  svg.innerHTML="";
-  // Draw ladders first, so the snakes and tokens remain visually on top.
-  LADDERS.forEach((ladder,index)=>{
-    const a=coordinates(ladder.from),b=coordinates(ladder.to);
-    const dx=b.x-a.x,dy=b.y-a.y;
-    const len=Math.hypot(dx,dy);
-    const px=-dy/len*12,py=dx/len*12;
-    svgEl("line",{x1:a.x+px,y1:a.y+py,x2:b.x+px,y2:b.y+py,class:"ladder-rail"},svg);
-    svgEl("line",{x1:a.x-px,y1:a.y-py,x2:b.x-px,y2:b.y-py,class:"ladder-rail"},svg);
-    const rungs=Math.max(3,Math.floor(len/32));
-    for(let i=1;i<rungs;i++){
-      const t=i/rungs;
-      const x=a.x+dx*t,y=a.y+dy*t;
-      svgEl("line",{x1:x+px,y1:y+py,x2:x-px,y2:y-py,class:"ladder-rung"},svg);
-    }
-  });
+        gain.gain.setValueAtTime(gainVal, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
 
-  SNAKES.forEach((snake,index)=>{
-    const a=coordinates(snake.from),b=coordinates(snake.to);
-    const mx=(a.x+b.x)/2+snake.curve;
-    const my=(a.y+b.y)/2-snake.curve*.45;
-    const path=`M ${a.x} ${a.y} Q ${mx} ${my} ${b.x} ${b.y}`;
-    svgEl("path",{d:path,class:"snake-line"},svg);
-    svgEl("path",{d:path,class:"snake-belly"},svg);
-    svgEl("circle",{cx:a.x,cy:a.y,r:18,class:"snake-head"},svg);
-    svgEl("circle",{cx:a.x-6,cy:a.y-4,r:5,class:"snake-eye"},svg);
-    svgEl("circle",{cx:a.x+6,cy:a.y-4,r:5,class:"snake-eye"},svg);
-    svgEl("circle",{cx:a.x-5,cy:a.y-4,r:2.2,class:"snake-pupil"},svg);
-    svgEl("circle",{cx:a.x+7,cy:a.y-4,r:2.2,class:"snake-pupil"},svg);
-    // Small forked tongue
-    svgEl("path",{d:`M ${a.x} ${a.y+13} l -4 8 m 4 -8 l 4 8`,stroke:"#ffb2a2","stroke-width":3,fill:"none","stroke-linecap":"round"},svg);
-  });
-}
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
 
-function makePlayers(count){
-  players=Array.from({length:count},(_,i)=>({
-    name:`Player ${i+1}`,
-    color:COLORS[i],
-    position:0,
-    photo:null
-  }));
-  current=0;
-  renderPlayers();
-  renderTokens();
-  updateTurn();
-}
+        osc.start(now);
+        osc.stop(now + duration);
+      }
 
-function renderPlayers(){
-  const list=$("playerList");
-  list.innerHTML="";
-  players.forEach((p,i)=>{
-    const row=document.createElement("div");
-    row.className="player"+(i===current?" current":"");
-    const avatar=document.createElement("div");
-    avatar.className="avatar";
-    avatar.style.setProperty("--player-color",p.color);
-    if(p.photo){
-      const img=document.createElement("img");
-      img.src=p.photo;
-      avatar.appendChild(img);
-    }else{
-      avatar.textContent=p.name.trim().charAt(0).toUpperCase()||String(i+1);
+      diceRoll() {
+        for (let i = 0; i < 6; i++) {
+          this.playTone(180 + Math.random() * 220, 'triangle', 0.06, i * 0.09, 0.12);
+        }
+      }
+
+      stepHop(stepIndex) {
+        const base = 360 + (stepIndex % 6) * 35;
+        this.playTone(base, 'sine', 0.11, 0, 0.14, base * 1.25);
+      }
+
+      ladderClimb() {
+        const notes = [330, 392, 440, 523, 659, 784];
+        notes.forEach((n, idx) => {
+          this.playTone(n, 'triangle', 0.14, idx * 0.09, 0.16);
+        });
+      }
+
+      escalatorRide() {
+        // Smooth futuristic hum + ascending chime
+        this.playTone(220, 'sawtooth', 0.75, 0, 0.06, 580);
+        const notes = [440, 554, 659, 880];
+        notes.forEach((n, idx) => {
+          this.playTone(n, 'sine', 0.18, idx * 0.16, 0.14);
+        });
+      }
+
+      snakeBite() {
+        // Cartoonish descending whistle + hiss
+        this.playTone(620, 'sawtooth', 0.65, 0, 0.14, 130);
+        this.playTone(480, 'sine', 0.65, 0.05, 0.12, 95);
+      }
+
+      victory() {
+        const melody = [523.25, 659.25, 783.99, 1046.5, 783.99, 1046.5];
+        melody.forEach((n, i) => {
+          this.playTone(n, 'triangle', i === melody.length - 1 ? 0.5 : 0.16, i * 0.14, 0.2);
+        });
+      }
     }
 
-    const info=document.createElement("div");
-    info.className="player-info";
-    const name=document.createElement("input");
-    name.type="text";
-    name.maxLength=16;
-    name.className="player-name";
-    name.value=p.name;
-    name.setAttribute("aria-label",`Player ${i+1} name`);
-    name.addEventListener("input",()=>{
-      p.name=name.value||`Player ${i+1}`;
-      renderTokens();
-      updateTurn();
-      const initial=avatar.querySelector(".initial");
-      if(!p.photo)avatar.textContent=p.name.trim().charAt(0).toUpperCase()||String(i+1);
+    const sfx = new SoundFX();
+
+    /**
+     * =========================================================================
+     * 2. BOARD CONFIGURATION (Snakes, Wooden Ladders & Long Escalators)
+     * =========================================================================
+     * Standard ladders are moderate climbs.
+     * Long climbs (>= 35 tiles jump) automatically render as sleek ESCALATORS!
+     */
+    const JUMPS = {
+      // Ladders & Escalators (start -> end where end > start)
+      3:  { to: 22, type: 'ladder' },
+      8:  { to: 26, type: 'ladder' },
+      14: { to: 55, type: 'escalator' }, // +41 tiles Long Escalator!
+      20: { to: 38, type: 'ladder' },
+      28: { to: 84, type: 'escalator' }, // +56 tiles Mega Escalator!
+      40: { to: 59, type: 'ladder' },
+      51: { to: 67, type: 'ladder' },
+      63: { to: 81, type: 'ladder' },
+      71: { to: 91, type: 'ladder' },
+
+      // Cartoon Snakes (head -> tail where tail < head)
+      17: { to: 7,  type: 'snake', palette: { body: '#ef4444', stripe: '#fde047', belly: '#fecaca' } },
+      34: { to: 12, type: 'snake', palette: { body: '#8b5cf6', stripe: '#67e8f9', belly: '#ddd6fe' } },
+      47: { to: 25, type: 'snake', palette: { body: '#10b981', stripe: '#fef08a', belly: '#a7f3d0' } },
+      62: { to: 19, type: 'snake', palette: { body: '#f97316', stripe: '#ffffff', belly: '#fed7aa' } },
+      64: { to: 42, type: 'snake', palette: { body: '#ec4899', stripe: '#fde047', belly: '#fbcfe8' } },
+      87: { to: 36, type: 'snake', palette: { body: '#06b6d4', stripe: '#f43f5e', belly: '#cffafe' } },
+      95: { to: 56, type: 'snake', palette: { body: '#eab308', stripe: '#7c3aed', belly: '#fef9c3' } },
+      98: { to: 78, type: 'snake', palette: { body: '#e11d48', stripe: '#38bdf8', belly: '#ffe4e6' } }
+    };
+
+    // Vibrant cheerful color palette for tiles
+    const TILE_COLORS = [
+      '#ffe4e6', // Rose 100
+      '#fef3c7', // Amber 100
+      '#dcfce7', // Emerald 100
+      '#e0f2fe', // Sky 100
+      '#f3e8ff', // Purple 100
+      '#ffedd5', // Orange 100
+      '#ccfbf1', // Teal 100
+      '#fce7f3', // Pink 100
+      '#fef9c3', // Yellow 100
+      '#e0e7ff'  // Indigo 100
+    ];
+
+    /**
+     * =========================================================================
+     * 3. PLAYER STATE & SETUP UI
+     * =========================================================================
+     */
+    const DEFAULT_COLORS = ['#ef4444', '#2563eb', '#10b981', '#f59e0b'];
+    const DEFAULT_EMOJIS = ['🦁', '🚀', '🦄', '🐼'];
+
+    let playerCount = 2;
+    let playerConfigs = [
+      { name: 'Player 1', color: DEFAULT_COLORS[0], photo: null, emoji: DEFAULT_EMOJIS[0] },
+      { name: 'Player 2', color: DEFAULT_COLORS[1], photo: null, emoji: DEFAULT_EMOJIS[1] },
+      { name: 'Player 3', color: DEFAULT_COLORS[2], photo: null, emoji: DEFAULT_EMOJIS[2] },
+      { name: 'Player 4', color: DEFAULT_COLORS[3], photo: null, emoji: DEFAULT_EMOJIS[3] }
+    ];
+
+    let players = [];
+    let currentPlayerIndex = 0;
+    let isAnimating = false;
+    let exactRollRequired = true;
+
+    const setupScreen = document.getElementById('setupScreen');
+    const gameScreen = document.getElementById('gameScreen');
+    const playerSetupList = document.getElementById('playerSetupList');
+    const countButtons = document.querySelectorAll('.count-btn');
+
+    function renderSetupCards() {
+      playerSetupList.innerHTML = '';
+      for (let i = 0; i < playerCount; i++) {
+        const cfg = playerConfigs[i];
+        const card = document.createElement('div');
+        card.className = 'bg-slate-50 rounded-2xl p-4 border-2 border-slate-200 flex items-center gap-3.5 shadow-sm';
+
+        const avatarPreview = cfg.photo
+          ? `<img src="${cfg.photo}" alt="${cfg.name}" class="w-full h-full object-cover" />`
+          : `<span class="text-2xl">${cfg.emoji}</span>`;
+
+        card.innerHTML = `
+          <div class="relative shrink-0">
+            <div class="w-16 h-16 rounded-full flex items-center justify-center overflow-hidden shadow-md border-4" style="background-color: ${cfg.color}; border-color: ${cfg.color};">
+              ${avatarPreview}
+            </div>
+            <label class="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white flex items-center justify-center shadow cursor-pointer text-xs" title="Upload photo from gallery">
+              📷
+              <input type="file" accept="image/*" class="hidden photo-input" data-index="${i}" />
+            </label>
+          </div>
+          <div class="flex-1 min-w-0">
+            <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Player ${i + 1}</label>
+            <input type="text" maxlength="14" value="${cfg.name}" data-index="${i}"
+              class="name-input w-full mt-0.5 px-3 py-1.5 rounded-xl bg-white border border-slate-300 font-bold text-slate-800 text-sm focus:outline-none focus:border-indigo-500"
+              placeholder="Enter name" />
+            <div class="flex items-center justify-between mt-2">
+              <div class="flex items-center gap-1.5">
+                ${DEFAULT_COLORS.map(c => `
+                  <button type="button" data-index="${i}" data-color="${c}"
+                    class="color-dot w-5 h-5 rounded-full border-2 ${cfg.color === c ? 'border-slate-900 scale-110' : 'border-white'} shadow-sm transition cursor-pointer"
+                    style="background-color: ${c};"></button>
+                `).join('')}
+              </div>
+              ${cfg.photo ? `<button type="button" data-index="${i}" class="clear-photo text-[11px] font-semibold text-rose-500 hover:underline cursor-pointer">Remove photo</button>` : `<span class="text-[11px] text-slate-400">Tap 📷 for photo</span>`}
+            </div>
+          </div>
+        `;
+        playerSetupList.appendChild(card);
+      }
+
+      // Attach listeners
+      document.querySelectorAll('.name-input').forEach(inp => {
+        inp.addEventListener('input', (e) => {
+          const idx = Number(e.target.dataset.index);
+          playerConfigs[idx].name = e.target.value.trim() || `Player ${idx + 1}`;
+        });
+      });
+
+      document.querySelectorAll('.color-dot').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const idx = Number(e.target.dataset.index);
+          playerConfigs[idx].color = e.target.dataset.color;
+          renderSetupCards();
+        });
+      });
+
+      document.querySelectorAll('.photo-input').forEach(inp => {
+        inp.addEventListener('change', (e) => {
+          const idx = Number(e.target.dataset.index);
+          const file = e.target.files && e.target.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            // Resize image via canvas to keep memory ultra-light and crisp
+            const img = new Image();
+            img.onload = () => {
+              const canvas = document.createElement('canvas');
+              const size = 180;
+              canvas.width = size;
+              canvas.height = size;
+              const ctx = canvas.getContext('2d');
+              const minSide = Math.min(img.width, img.height);
+              const sx = (img.width - minSide) / 2;
+              const sy = (img.height - minSide) / 2;
+              ctx.drawImage(img, sx, sy, minSide, minSide, 0, 0, size, size);
+              playerConfigs[idx].photo = canvas.toDataURL('image/jpeg', 0.85);
+              renderSetupCards();
+            };
+            img.src = ev.target.result;
+          };
+          reader.readAsDataURL(file);
+        });
+      });
+
+      document.querySelectorAll('.clear-photo').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const idx = Number(e.target.dataset.index);
+          playerConfigs[idx].photo = null;
+          renderSetupCards();
+        });
+      });
+    }
+
+    countButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        playerCount = Number(btn.dataset.count);
+        countButtons.forEach(b => {
+          const active = Number(b.dataset.count) === playerCount;
+          b.className = active
+            ? 'count-btn py-2.5 rounded-2xl font-display font-bold text-lg border-2 border-indigo-600 bg-indigo-600 text-white shadow-md transition'
+            : 'count-btn py-2.5 rounded-2xl font-display font-bold text-lg border-2 border-slate-200 bg-slate-50 text-slate-700 hover:border-indigo-300 transition';
+        });
+        renderSetupCards();
+      });
     });
 
-    const meta=document.createElement("div");
-    meta.className="player-meta";
-    meta.textContent=`${p.position===0?"At start":`Tile ${p.position}`} · ${p.position===100?"Winner": "In the game"}`;
+    renderSetupCards();
 
-    const photoLabel=document.createElement("label");
-    photoLabel.className="photo-label";
-    photoLabel.textContent=p.photo?"Change photo":"＋ Add photo";
-    const file=document.createElement("input");
-    file.type="file";
-    file.accept="image/*";
-    file.addEventListener("change",()=>{
-      const selected=file.files&&file.files[0];
-      if(!selected)return;
-      if(!selected.type.startsWith("image/")){
-        alert("Please select an image file.");
+    /**
+     * =========================================================================
+     * 4. BOARD GEOMETRY & SVG RENDERING (Snakes, Wooden Ladders & Escalators)
+     * =========================================================================
+     */
+    const boardGrid = document.getElementById('boardGrid');
+    const boardOverlay = document.getElementById('boardOverlay');
+
+    // Returns { row (0 top to 9 bottom), col (0 left to 9 right), cx (0-1000), cy (0-1000) }
+    function getTileCoords(tileNum) {
+      const clamped = Math.max(1, Math.min(100, tileNum));
+      const zeroIdx = clamped - 1;
+      const rowFromBottom = Math.floor(zeroIdx / 10);
+      const row = 9 - rowFromBottom;
+      const colInRow = zeroIdx % 10;
+      const col = (rowFromBottom % 2 === 0) ? colInRow : (9 - colInRow);
+
+      const cx = col * 100 + 50;
+      const cy = row * 100 + 50;
+      return { row, col, cx, cy };
+    }
+
+    function buildBoardTiles() {
+      boardGrid.innerHTML = '';
+      for (let r = 0; r < 10; r++) {
+        const rowFromBottom = 9 - r;
+        for (let c = 0; c < 10; c++) {
+          const colInRow = (rowFromBottom % 2 === 0) ? c : (9 - c);
+          const tileNum = rowFromBottom * 10 + colInRow + 1;
+
+          const tile = document.createElement('div');
+          tile.className = 'tile';
+          const colorIdx = (tileNum * 3 + r) % TILE_COLORS.length;
+          tile.style.backgroundColor = TILE_COLORS[colorIdx];
+
+          let badge = '';
+          if (tileNum === 1) {
+            tile.style.backgroundColor = '#bbf7d0';
+            badge = `<span class="text-[8px] sm:text-[10px] font-extrabold text-emerald-800 uppercase tracking-tighter">START</span>`;
+          } else if (tileNum === 100) {
+            tile.style.backgroundColor = '#fde047';
+            badge = `<span class="text-[9px] sm:text-[11px] font-extrabold text-amber-900">👑 GOAL</span>`;
+          } else if (JUMPS[tileNum]) {
+            const j = JUMPS[tileNum];
+            if (j.type === 'escalator') {
+              badge = `<span class="text-[8px] sm:text-[10px] font-bold text-cyan-800">🛗→${j.to}</span>`;
+            } else if (j.type === 'ladder') {
+              badge = `<span class="text-[8px] sm:text-[10px] font-bold text-amber-800">🪜→${j.to}</span>`;
+            } else {
+              badge = `<span class="text-[8px] sm:text-[10px] font-bold text-rose-700">🐍→${j.to}</span>`;
+            }
+          }
+
+          tile.innerHTML = `
+            <span class="tile-num">${tileNum}</span>
+            <div class="self-end leading-none z-10">${badge}</div>
+          `;
+          boardGrid.appendChild(tile);
+        }
+      }
+    }
+
+    function renderBoardOverlay() {
+      let svgHTML = `
+        <defs>
+          <filter id="dropShadow" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="5" stdDeviation="4" flood-color="#0f172a" flood-opacity="0.28"/>
+          </filter>
+          <linearGradient id="woodRail" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#92400e"/>
+            <stop offset="50%" stop-color="#d97706"/>
+            <stop offset="100%" stop-color="#78350f"/>
+          </linearGradient>
+          <linearGradient id="metalRail" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#334155"/>
+            <stop offset="50%" stop-color="#94a3b8"/>
+            <stop offset="100%" stop-color="#1e293b"/>
+          </linearGradient>
+          <linearGradient id="glassSide" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.45"/>
+            <stop offset="100%" stop-color="#0284c7" stop-opacity="0.25"/>
+          </linearGradient>
+        </defs>
+      `;
+
+      // 1. Draw Ladders & Escalators first (underneath snakes)
+      Object.entries(JUMPS).forEach(([startStr, jump]) => {
+        const start = Number(startStr);
+        if (jump.type === 'ladder') {
+          svgHTML += drawWoodenLadder(start, jump.to);
+        } else if (jump.type === 'escalator') {
+          svgHTML += drawEscalator(start, jump.to);
+        }
+      });
+
+      // 2. Draw Catchy Cartoon Snakes on top
+      Object.entries(JUMPS).forEach(([startStr, jump]) => {
+        const start = Number(startStr);
+        if (jump.type === 'snake') {
+          svgHTML += drawCartoonSnake(start, jump.to, jump.palette);
+        }
+      });
+
+      boardOverlay.innerHTML = svgHTML;
+    }
+
+    function drawWoodenLadder(fromTile, toTile) {
+      const p1 = getTileCoords(fromTile);
+      const p2 = getTileCoords(toTile);
+      const dx = p2.cx - p1.cx;
+      const dy = p2.cy - p1.cy;
+      const len = Math.hypot(dx, dy);
+      const nx = (-dy / len) * 20; // half-width of ladder = 20
+      const ny = (dx / len) * 20;
+
+      const r1x1 = p1.cx + nx, r1y1 = p1.cy + ny;
+      const r1x2 = p2.cx + nx, r1y2 = p2.cy + ny;
+      const r2x1 = p1.cx - nx, r2y1 = p1.cy - ny;
+      const r2x2 = p2.cx - nx, r2y2 = p2.cy - ny;
+
+      const steps = Math.max(4, Math.floor(len / 34));
+      let rungs = '';
+      for (let i = 1; i < steps; i++) {
+        const t = i / steps;
+        const lx = r1x1 + (r1x2 - r1x1) * t;
+        const ly = r1y1 + (r1y2 - r1y1) * t;
+        const rx = r2x1 + (r2x2 - r2x1) * t;
+        const ry = r2y1 + (r2y2 - r2y1) * t;
+        rungs += `
+          <line x1="${lx}" y1="${ly}" x2="${rx}" y2="${ry}" stroke="#78350f" stroke-width="9" stroke-linecap="round"/>
+          <line x1="${lx}" y1="${ly}" x2="${rx}" y2="${ry}" stroke="#fbbf24" stroke-width="4" stroke-linecap="round"/>
+        `;
+      }
+
+      return `
+        <g filter="url(#dropShadow)">
+          ${rungs}
+          <line x1="${r1x1}" y1="${r1y1}" x2="${r1x2}" y2="${r1y2}" stroke="url(#woodRail)" stroke-width="11" stroke-linecap="round"/>
+          <line x1="${r2x1}" y1="${r2y1}" x2="${r2x2}" y2="${r2y2}" stroke="url(#woodRail)" stroke-width="11" stroke-linecap="round"/>
+        </g>
+      `;
+    }
+
+    function drawEscalator(fromTile, toTile) {
+      const p1 = getTileCoords(fromTile);
+      const p2 = getTileCoords(toTile);
+      const dx = p2.cx - p1.cx;
+      const dy = p2.cy - p1.cy;
+      const len = Math.hypot(dx, dy);
+      const nx = (-dy / len) * 26;
+      const ny = (dx / len) * 26;
+
+      const r1x1 = p1.cx + nx, r1y1 = p1.cy + ny;
+      const r1x2 = p2.cx + nx, r1y2 = p2.cy + ny;
+      const r2x1 = p1.cx - nx, r2y1 = p1.cy - ny;
+      const r2x2 = p2.cx - nx, r2y2 = p2.cy - ny;
+
+      return `
+        <g filter="url(#dropShadow)">
+          <!-- Escalator Metallic Track Bed -->
+          <line x1="${p1.cx}" y1="${p1.cy}" x2="${p2.cx}" y2="${p2.cy}" stroke="#1e293b" stroke-width="46" stroke-linecap="round"/>
+          <line x1="${p1.cx}" y1="${p1.cy}" x2="${p2.cx}" y2="${p2.cy}" stroke="#475569" stroke-width="38" stroke-linecap="round"/>
+          <!-- Animated Moving Steps -->
+          <line x1="${p1.cx}" y1="${p1.cy}" x2="${p2.cx}" y2="${p2.cy}"
+                stroke="#e2e8f0" stroke-width="30" stroke-dasharray="8 16" class="escalator-steps"/>
+          <!-- Yellow Safety Side Strips -->
+          <line x1="${r1x1}" y1="${r1y1}" x2="${r1x2}" y2="${r1y2}" stroke="#facc15" stroke-width="12" stroke-linecap="round"/>
+          <line x1="${r2x1}" y1="${r2y1}" x2="${r2x2}" y2="${r2y2}" stroke="#facc15" stroke-width="12" stroke-linecap="round"/>
+          <!-- Black Rubber Handrails -->
+          <line x1="${r1x1}" y1="${r1y1}" x2="${r1x2}" y2="${r1y2}" stroke="#0f172a" stroke-width="6" stroke-linecap="round"/>
+          <line x1="${r2x1}" y1="${r2y1}" x2="${r2x2}" y2="${r2y2}" stroke="#0f172a" stroke-width="6" stroke-linecap="round"/>
+          <!-- Entry & Exit Landing Plates -->
+          <circle cx="${p1.cx}" cy="${p1.cy}" r="22" fill="#0ea5e9" stroke="#ffffff" stroke-width="3"/>
+          <text x="${p1.cx}" y="${p1.cy + 5}" text-anchor="middle" fill="#ffffff" font-size="16" font-weight="bold">UP</text>
+          <circle cx="${p2.cx}" cy="${p2.cy}" r="18" fill="#10b981" stroke="#ffffff" stroke-width="3"/>
+        </g>
+      `;
+    }
+
+    function drawCartoonSnake(headTile, tailTile, palette) {
+      const head = getTileCoords(headTile);
+      const tail = getTileCoords(tailTile);
+
+      const dx = tail.cx - head.cx;
+      const dy = tail.cy - head.cy;
+      const len = Math.hypot(dx, dy);
+      const perpX = -dy / len;
+      const perpY = dx / len;
+
+      // Create a smooth S-curve using cubic Bezier control points
+      const waveAmp = Math.min(95, Math.max(45, len * 0.24));
+      const cp1x = head.cx + dx * 0.32 + perpX * waveAmp;
+      const cp1y = head.cy + dy * 0.32 + perpY * waveAmp;
+      const cp2x = head.cx + dx * 0.68 - perpX * waveAmp;
+      const cp2y = head.cy + dy * 0.68 - perpY * waveAmp;
+
+      const pathD = `M ${head.cx} ${head.cy} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${tail.cx} ${tail.cy}`;
+
+      // Calculate head angle pointing away from first curve segment
+      const headAngle = Math.atan2(head.cy - cp1y, head.cx - cp1x) * (180 / Math.PI);
+
+      return `
+        <g filter="url(#dropShadow)">
+          <!-- Dark Outline for Cartoon Pop -->
+          <path d="${pathD}" fill="none" stroke="#0f172a" stroke-width="30" stroke-linecap="round"/>
+          <!-- Main Snake Body -->
+          <path d="${pathD}" fill="none" stroke="${palette.body}" stroke-width="23" stroke-linecap="round"/>
+          <!-- Playful Stripes / Spots along spine -->
+          <path d="${pathD}" fill="none" stroke="${palette.stripe}" stroke-width="14" stroke-dasharray="10 22" stroke-linecap="round"/>
+          <!-- Highlight shine -->
+          <path d="${pathD}" fill="none" stroke="#ffffff" stroke-opacity="0.35" stroke-width="5" stroke-linecap="round"/>
+
+          <!-- Cartoon Snake Head -->
+          <g transform="translate(${head.cx}, ${head.cy}) rotate(${headAngle})">
+            <!-- Forked Red Tongue -->
+            <path d="M 18 0 L 34 -6 L 29 0 L 34 6 Z" fill="#ef4444" stroke="#7f1d1d" stroke-width="1.5"/>
+            <!-- Head Shape -->
+            <ellipse cx="4" cy="0" rx="22" ry="18" fill="${palette.body}" stroke="#0f172a" stroke-width="3.5"/>
+            <!-- Cheeks -->
+            <circle cx="8" cy="-11" r="4" fill="#fda4af" opacity="0.8"/>
+            <circle cx="8" cy="11" r="4" fill="#fda4af" opacity="0.8"/>
+            <!-- Big Googly Cartoon Eyes -->
+            <circle cx="8" cy="-8" r="6.5" fill="#ffffff" stroke="#0f172a" stroke-width="2"/>
+            <circle cx="10" cy="-8" r="3" fill="#0f172a"/>
+            <circle cx="11" cy="-9" r="1.1" fill="#ffffff"/>
+
+            <circle cx="8" cy="8" r="6.5" fill="#ffffff" stroke="#0f172a" stroke-width="2"/>
+            <circle cx="10" cy="8" r="3" fill="#0f172a"/>
+            <circle cx="11" cy="7" r="1.1" fill="#ffffff"/>
+          </g>
+        </g>
+      `;
+    }
+
+    /**
+     * =========================================================================
+     * 5. GAMEPLAY, TOKENS & STEP-BY-STEP ANIMATION
+     * =========================================================================
+     */
+    const tokensLayer = document.getElementById('tokensLayer');
+    const scoreboardList = document.getElementById('scoreboardList');
+    const statusTitle = document.getElementById('statusTitle');
+    const statusSubtitle = document.getElementById('statusSubtitle');
+    const rollBtn = document.getElementById('rollBtn');
+    const diceCube = document.getElementById('diceCube');
+    const lastRollBadge = document.getElementById('lastRollBadge');
+
+    // Offsets so multiple tokens on the exact same tile don't cover each other
+    const TOKEN_OFFSETS = [
+      { dx: -16, dy: -16 },
+      { dx:  16, dy: -16 },
+      { dx: -16, dy:  16 },
+      { dx:  16, dy:  16 }
+    ];
+
+    function initGame() {
+      exactRollRequired = document.getElementById('exactRollToggle').checked;
+      players = [];
+      for (let i = 0; i < playerCount; i++) {
+        players.push({
+          id: i,
+          name: playerConfigs[i].name || `Player ${i + 1}`,
+          color: playerConfigs[i].color,
+          photo: playerConfigs[i].photo,
+          emoji: playerConfigs[i].emoji,
+          pos: 1
+        });
+      }
+
+      currentPlayerIndex = 0;
+      isAnimating = false;
+      rollBtn.disabled = false;
+
+      buildBoardTiles();
+      renderBoardOverlay();
+      renderTokens();
+      renderScoreboard();
+      updateTurnUI();
+      setDiceFace(1);
+    }
+
+    function renderTokens() {
+      tokensLayer.innerHTML = '';
+      players.forEach((p, idx) => {
+        const el = document.createElement('div');
+        el.id = `token-${idx}`;
+        el.className = `player-token ${idx === currentPlayerIndex ? 'active-turn' : ''}`;
+        el.style.backgroundColor = p.color;
+        el.style.borderColor = '#ffffff';
+
+        if (p.photo) {
+          el.innerHTML = `<img src="${p.photo}" alt="${p.name}" />`;
+        } else {
+          el.innerHTML = `<span class="text-sm sm:text-base">${p.emoji}</span>`;
+        }
+
+        tokensLayer.appendChild(el);
+        positionTokenElement(idx, p.pos, false);
+      });
+    }
+
+    function positionTokenElement(playerIdx, tileNum, isSliding = false) {
+      const el = document.getElementById(`token-${playerIdx}`);
+      if (!el) return;
+
+      if (isSliding) {
+        el.classList.add('sliding');
+      } else {
+        el.classList.remove('sliding');
+      }
+
+      const coords = getTileCoords(tileNum);
+      // Check if others share this tile to apply neat quadrant offset
+      const sameTilePlayers = players.filter(pl => pl.pos === tileNum);
+      let offsetX = 0, offsetY = 0;
+      if (sameTilePlayers.length > 1) {
+        const subIdx = playerIdx % TOKEN_OFFSETS.length;
+        offsetX = TOKEN_OFFSETS[subIdx].dx;
+        offsetY = TOKEN_OFFSETS[subIdx].dy;
+      }
+
+      const leftPct = ((coords.cx + offsetX) / 1000) * 100;
+      const topPct = ((coords.cy + offsetY) / 1000) * 100;
+      el.style.left = `${leftPct}%`;
+      el.style.top = `${topPct}%`;
+    }
+
+    function renderScoreboard() {
+      scoreboardList.innerHTML = '';
+      players.forEach((p, idx) => {
+        const isTurn = idx === currentPlayerIndex;
+        const avatarHtml = p.photo
+          ? `<img src="${p.photo}" alt="${p.name}" class="w-full h-full object-cover" />`
+          : `<span class="text-base">${p.emoji}</span>`;
+
+        const row = document.createElement('div');
+        row.className = `flex items-center justify-between p-2.5 rounded-2xl border-2 transition ${
+          isTurn
+            ? 'bg-indigo-50/90 border-indigo-500 shadow-sm'
+            : 'bg-slate-50 border-slate-100'
+        }`;
+
+        row.innerHTML = `
+          <div class="flex items-center gap-2.5 min-w-0">
+            <div class="w-9 h-9 rounded-full shrink-0 overflow-hidden flex items-center justify-center border-2 border-white shadow" style="background-color: ${p.color};">
+              ${avatarHtml}
+            </div>
+            <div class="truncate">
+              <p class="font-bold text-sm text-slate-800 truncate">${p.name}</p>
+              <p class="text-[11px] font-semibold ${isTurn ? 'text-indigo-600' : 'text-slate-400'}">
+                ${isTurn ? '● Active Turn' : 'Waiting'}
+              </p>
+            </div>
+          </div>
+          <div class="px-2.5 py-1 rounded-xl bg-white border border-slate-200 font-display font-bold text-sm text-slate-800 shadow-xs">
+            Tile ${p.pos}
+          </div>
+        `;
+        scoreboardList.appendChild(row);
+      });
+    }
+
+    function updateTurnUI() {
+      const p = players[currentPlayerIndex];
+      statusTitle.textContent = `${p.name}'s Turn!`;
+      statusTitle.style.color = p.color;
+      statusSubtitle.textContent = `Currently on Tile ${p.pos} — Roll the dice!`;
+
+      document.querySelectorAll('.player-token').forEach((tok, idx) => {
+        tok.classList.toggle('active-turn', idx === currentPlayerIndex);
+      });
+      renderScoreboard();
+    }
+
+    // Orient 3D CSS Cube so the rolled face faces front
+    function setDiceFace(val) {
+      const rotations = {
+        1: 'rotateX(0deg) rotateY(0deg)',
+        2: 'rotateX(0deg) rotateY(-90deg)',
+        3: 'rotateX(-90deg) rotateY(0deg)',
+        4: 'rotateX(90deg) rotateY(0deg)',
+        5: 'rotateX(0deg) rotateY(90deg)',
+        6: 'rotateX(0deg) rotateY(180deg)'
+      };
+      diceCube.style.transform = rotations[val] || rotations[1];
+    }
+
+    const sleep = (ms) => new Promise(res => setTimeout(res, ms));
+
+    async function handleRollDice() {
+      if (isAnimating) return;
+      isAnimating = true;
+      rollBtn.disabled = true;
+
+      const activePlayer = players[currentPlayerIndex];
+      const rolled = Math.floor(Math.random() * 6) + 1;
+
+      // 1. Roll 3D Dice Animation
+      sfx.diceRoll();
+      statusTitle.textContent = `${activePlayer.name} is rolling...`;
+      statusSubtitle.textContent = 'Good luck!';
+      diceCube.classList.add('rolling');
+
+      await sleep(800);
+
+      diceCube.classList.remove('rolling');
+      setDiceFace(rolled);
+      lastRollBadge.textContent = `${activePlayer.name} rolled a ${rolled}!`;
+
+      await sleep(300);
+
+      // 2. Calculate Step-by-Step Path
+      let targetPos = activePlayer.pos + rolled;
+      const path = [];
+
+      if (targetPos <= 100) {
+        for (let step = activePlayer.pos + 1; step <= targetPos; step++) {
+          path.push(step);
+        }
+      } else if (exactRollRequired) {
+        // Walk up to 100, then bounce backward
+        const overshoot = targetPos - 100;
+        for (let step = activePlayer.pos + 1; step <= 100; step++) {
+          path.push(step);
+        }
+        for (let b = 99; b >= 100 - overshoot; b--) {
+          path.push(b);
+        }
+        statusSubtitle.textContent = `Rolled ${rolled} — Bounced back from 100!`;
+      } else {
+        for (let step = activePlayer.pos + 1; step <= 100; step++) {
+          path.push(step);
+        }
+      }
+
+      // 3. Animate Hopping Tile-by-Tile
+      for (let i = 0; i < path.length; i++) {
+        activePlayer.pos = path[i];
+        sfx.stepHop(i);
+        positionTokenElement(currentPlayerIndex, activePlayer.pos, false);
+        renderScoreboard();
+        await sleep(240);
+      }
+
+      // 4. Check for Win at Tile 100
+      if (activePlayer.pos === 100) {
+        sfx.victory();
+        showVictoryModal(activePlayer);
         return;
       }
-      const reader=new FileReader();
-      reader.onload=()=>{
-        p.photo=reader.result;
-        renderPlayers();
-        renderTokens();
-      };
-      reader.readAsDataURL(selected);
+
+      // 5. Check for Ladder, Escalator, or Snake
+      const jump = JUMPS[activePlayer.pos];
+      if (jump) {
+        await sleep(250);
+        if (jump.type === 'escalator') {
+          statusTitle.textContent = `🛗 MEGA ESCALATOR!`;
+          statusSubtitle.textContent = `${activePlayer.name} rides up from ${activePlayer.pos} to ${jump.to}!`;
+          sfx.escalatorRide();
+        } else if (jump.type === 'ladder') {
+          statusTitle.textContent = `🪜 CLIMBING LADDER!`;
+          statusSubtitle.textContent = `${activePlayer.name} climbs from ${activePlayer.pos} to ${jump.to}!`;
+          sfx.ladderClimb();
+        } else {
+          statusTitle.textContent = `🐍 OH NO, A SNAKE!`;
+          statusSubtitle.textContent = `${activePlayer.name} slides down from ${activePlayer.pos} to ${jump.to}!`;
+          sfx.snakeBite();
+        }
+
+        activePlayer.pos = jump.to;
+        positionTokenElement(currentPlayerIndex, activePlayer.pos, true);
+        renderScoreboard();
+        await sleep(850);
+
+        if (activePlayer.pos === 100) {
+          sfx.victory();
+          showVictoryModal(activePlayer);
+          return;
+        }
+      }
+
+      // Re-adjust offsets for all tokens after movement finishes
+      players.forEach((_, idx) => positionTokenElement(idx, players[idx].pos, false));
+
+      // 6. Next Player's Turn (Bonus roll on 6? Let's keep standard alternating turns, or bonus on 6!)
+      if (rolled === 6) {
+        statusTitle.textContent = `🎲 ${activePlayer.name} rolled a 6!`;
+        statusSubtitle.textContent = `Bonus roll! Go again, ${activePlayer.name}!`;
+        isAnimating = false;
+        rollBtn.disabled = false;
+      } else {
+        currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
+        isAnimating = false;
+        rollBtn.disabled = false;
+        updateTurnUI();
+      }
+    }
+
+    /**
+     * =========================================================================
+     * 6. VICTORY MODAL & CONFETTI CELEBRATION
+     * =========================================================================
+     */
+    const victoryModal = document.getElementById('victoryModal');
+    const winnerAvatarBox = document.getElementById('winnerAvatarBox');
+    const winnerNameText = document.getElementById('winnerNameText');
+    let confettiAnimId = null;
+
+    function showVictoryModal(winner) {
+      winnerNameText.textContent = `${winner.name} Wins!`;
+      winnerAvatarBox.style.backgroundColor = winner.color;
+      winnerAvatarBox.innerHTML = winner.photo
+        ? `<img src="${winner.photo}" alt="${winner.name}" class="w-full h-full object-cover" />`
+        : `<span class="text-5xl">${winner.emoji}</span>`;
+
+      victoryModal.classList.remove('hidden');
+      startConfetti();
+    }
+
+    function startConfetti() {
+      const canvas = document.getElementById('confettiCanvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      const pieces = Array.from({ length: 130 }, () => ({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height - canvas.height,
+        w: 8 + Math.random() * 8,
+        h: 6 + Math.random() * 6,
+        color: ['#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899'][Math.floor(Math.random() * 6)],
+        vy: 2.5 + Math.random() * 4,
+        vx: -2 + Math.random() * 4,
+        rot: Math.random() * 360,
+        vRot: -6 + Math.random() * 12
+      }));
+
+      function loop() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        pieces.forEach(p => {
+          p.x += p.vx;
+          p.y += p.vy;
+          p.rot += p.vRot;
+          if (p.y > canvas.height) p.y = -20;
+
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate((p.rot * Math.PI) / 180);
+          ctx.fillStyle = p.color;
+          ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+          ctx.restore();
+        });
+        confettiAnimId = requestAnimationFrame(loop);
+      }
+      loop();
+    }
+
+    function stopConfetti() {
+      if (confettiAnimId) cancelAnimationFrame(confettiAnimId);
+      const canvas = document.getElementById('confettiCanvas');
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    /**
+     * =========================================================================
+     * 7. EVENT LISTENERS
+     * =========================================================================
+     */
+    document.getElementById('startGameBtn').addEventListener('click', () => {
+      sfx.init();
+      setupScreen.classList.add('hidden');
+      gameScreen.classList.remove('hidden');
+      initGame();
     });
-    photoLabel.appendChild(file);
-    info.append(name,meta,photoLabel);
-    row.append(avatar,info);
-    list.appendChild(row);
-  });
-}
 
-function renderTokens(){
-  const container=$("tokens");
-  container.innerHTML="";
-  players.forEach((p,i)=>{
-    const token=document.createElement("div");
-    token.className="token"+(i===current?" active-token":"");
-    token.style.setProperty("--token-color",p.color);
-    token.dataset.player=i;
-    if(p.photo){
-      const img=document.createElement("img");
-      img.src=p.photo;
-      token.appendChild(img);
-    }else{
-      const initial=document.createElement("span");
-      initial.className="initial";
-      initial.textContent=p.name.trim().charAt(0).toUpperCase()||String(i+1);
-      token.appendChild(initial);
-    }
-    container.appendChild(token);
-  });
-  positionTokens();
-}
+    document.getElementById('backToSetupBtn').addEventListener('click', () => {
+      stopConfetti();
+      victoryModal.classList.add('hidden');
+      gameScreen.classList.add('hidden');
+      setupScreen.classList.remove('hidden');
+    });
 
-function positionTokens(){
-  players.forEach((p,i)=>{
-    const token=$("tokens").querySelector(`[data-player="${i}"]`);
-    if(!token)return;
-    const square=p.position===0?1:p.position;
-    const c=coordinates(square);
-    // Starting players are grouped just beside the starting square.
-    const offsets=[
-      [-12,-10],[12,-10],[-12,11],[12,11]
-    ];
-    let x=c.x,y=c.y;
-    if(p.position===0){
-      x+=offsets[i][0];
-      y+=offsets[i][1];
-    }else{
-      const same=players.slice(0,i).filter(other=>other.position===p.position).length;
-      x+=offsets[same%4][0];
-      y+=offsets[same%4][1];
-    }
-    token.style.left=(x/10)+"%";
-    token.style.top=(y/10)+"%";
-    token.classList.toggle("active-token",i===current);
-  });
-}
+    document.getElementById('playAgainBtn').addEventListener('click', () => {
+      stopConfetti();
+      victoryModal.classList.add('hidden');
+      initGame();
+    });
 
-function updateTurn(){
-  if(!players.length)return;
-  $("turnName").textContent=players[current].name||`Player ${current+1}`;
-  renderPlayers();
-  positionTokens();
-}
+    document.getElementById('newPlayersBtn').addEventListener('click', () => {
+      stopConfetti();
+      victoryModal.classList.add('hidden');
+      gameScreen.classList.add('hidden');
+      setupScreen.classList.remove('hidden');
+    });
 
-function showStatus(message){$("status").textContent=message}
+    rollBtn.addEventListener('click', handleRollDice);
+    document.getElementById('diceClickArea').addEventListener('click', handleRollDice);
 
-function setDiceFace(n){
-  const dice=$("dice");
-  const rotations={
-    1:"rotateX(0deg) rotateY(0deg)",
-    2:"rotateX(0deg) rotateY(-90deg)",
-    3:"rotateX(-90deg) rotateY(0deg)",
-    4:"rotateX(90deg) rotateY(0deg)",
-    5:"rotateX(0deg) rotateY(90deg)",
-    6:"rotateX(0deg) rotateY(180deg)"
-  };
-  dice.style.transform=`translateZ(-44px) ${rotations[n]}`;
-  // Replace front face dots with the rolled number.
-  const front=dice.querySelector(".front");
-  const layouts={
-    1:["d3"],
-    2:["d1","d5"],
-    3:["d1","d3","d5"],
-    4:["d1","d2","d4","d5"],
-    5:["d1","d2","d3","d4","d5"],
-    6:["d1","d2","d3","d4","d5","d6"]
-  };
-  front.innerHTML="";
-  layouts[n].forEach(cls=>{
-    const dot=document.createElement("i");
-    dot.className="dot "+cls;
-    front.appendChild(dot);
-  });
-}
+    document.getElementById('muteBtn').addEventListener('click', (e) => {
+      sfx.muted = !sfx.muted;
+      e.target.textContent = sfx.muted ? '🔇' : '🔊';
+    });
 
-async function movePlayer(playerIndex,steps){
-  const p=players[playerIndex];
-  const destination=p.position+steps;
-  if(destination>100){
-    showStatus(`${p.name} needs an exact roll to reach 100.`);
-    return false;
-  }
-  for(let square=p.position+1;square<=destination;square++){
-    p.position=square;
-    positionTokens();
-    await wait(220);
-  }
-  renderPlayers();
-  await wait(350);
-
-  const ladder=LADDERS.find(x=>x.from===p.position);
-  const snake=SNAKES.find(x=>x.from===p.position);
-
-  if(ladder){
-    showStatus(`🪜 ${p.name} landed on a ladder! Climbing from ${ladder.from} to ${ladder.to}.`);
-    await wait(500);
-    p.position=ladder.to;
-    positionTokens();
-    await wait(800);
-    renderPlayers();
-  }else if(snake){
-    showStatus(`🐍 ${p.name} got caught by a snake! Sliding from ${snake.from} to ${snake.to}.`);
-    await wait(500);
-    p.position=snake.to;
-    positionTokens();
-    await wait(800);
-    renderPlayers();
-  }
-  return true;
-}
-
-async function rollDice(){
-  if(busy||gameOver)return;
-  busy=true;
-  $("rollBtn").disabled=true;
-  const dice=$("dice");
-  dice.classList.add("rolling");
-  $("diceResult").textContent="Rolling...";
-  showStatus(`${players[current].name} is rolling...`);
-
-  await wait(1100);
-  const roll=Math.floor(Math.random()*6)+1;
-  lastRoll=roll;
-  dice.classList.remove("rolling");
-  setDiceFace(roll);
-  $("diceResult").textContent=`You rolled a ${roll}!`;
-
-  const playerIndex=current;
-  const p=players[playerIndex];
-  await wait(250);
-  const moved=await movePlayer(playerIndex,roll);
-
-  if(moved&&p.position===100){
-    gameOver=true;
-    $("winnerTitle").textContent=`${p.name} wins!`;
-    $("winBanner").classList.add("show");
-    showStatus(`🏆 ${p.name} reached tile 100 and won!`);
-    busy=false;
-    return;
-  }
-
-  current=(current+1)%players.length;
-  updateTurn();
-  showStatus(`${players[current].name}'s turn. Roll the dice!`);
-  $("rollBtn").disabled=false;
-  busy=false;
-}
-
-function restart(){
-  busy=false;
-  gameOver=false;
-  current=0;
-  players.forEach(p=>p.position=0);
-  $("winBanner").classList.remove("show");
-  $("dice").classList.remove("rolling");
-  setDiceFace(1);
-  $("diceResult").textContent="Ready to roll!";
-  $("rollBtn").disabled=false;
-  renderPlayers();
-  renderTokens();
-  updateTurn();
-  showStatus(`${players[0].name}, roll the dice to begin.`);
-}
-
-$("playerCount").addEventListener("change",e=>{
-  makePlayers(Number(e.target.value));
-  restart();
-});
-$("rollBtn").addEventListener("click",rollDice);
-$("resetBtn").addEventListener("click",restart);
-$("playAgain").addEventListener("click",restart);
-
-buildBoard();
-drawConnections();
-makePlayers(2);
-setDiceFace(1);
-showStatus("Player 1, roll the dice to begin.");
-</script>
+    window.addEventListener('resize', () => {
+      if (!gameScreen.classList.contains('hidden')) {
+        players.forEach((_, idx) => positionTokenElement(idx, players[idx].pos, false));
+      }
+    });
+  </script>
 </body>
 </html>
